@@ -1,0 +1,172 @@
+   <% if(data.rules == 2){ %> <% include ../users/mydashboard_header.ejs %> <% } else if(data.rules == 1){ %> <% include ../admin/dashboard_header.ejs %> <% } %>
+   
+<script>
+	var profile = {
+		fullname : '<%=data.fullname %>',
+		rulesname : '<%=data.rulesname %>',
+	};
+	var msgCode = new URL(window.location.href).searchParams.get("code");
+	var msgOwner = null;
+	$(document).ready(function () {
+		getMyMessageCount();
+	
+		if(Msh_notEmpty(msgCode) == true){
+			designForReplay();
+		}else{
+			designForNew();
+		}
+		getUsersAdmin();
+	});	
+	
+	function designForReplay(){
+		$('#title_msg').text('پاسخ به پیام انتخاب شده');
+		$('#message_subject').css('border-color', 'darkgrey');
+		$('#message_subject').attr('disabled', true);
+		getMessageByCode(msgCode);
+		    
+	}
+	
+	function designForNew(){
+		$('#title_msg').text('ارسال پیام به مدیران سامانه');
+		$('#repaly_group').remove();
+	}
+	
+	function getMessageByCode(code){
+		$.getJSON("/message_load/" + code , function(result){
+			$('#textarea_repaly').append(result.desc);
+			$('#message_subject').val(result.subject);
+			msgOwner = result.owner;
+		});	
+	}
+	
+	function getUsersAdmin(){
+		var sel = $('#usersAdmin');
+		$.getJSON("/listuseradmin", function(result){
+			var opt = document.createElement('option');
+			opt.innerHTML = 'یک مورد را انتخاب نمایید...';
+			opt.value = "";
+			sel.append(opt);
+			$.each(result, function(i, field){
+				opt = document.createElement('option');
+				opt.innerHTML = result[i].fullname;
+				opt.value = result[i].code;
+				sel.append(opt);
+			});
+		});		
+	}
+	
+	function sendMessage(){
+		obj = {
+			reciver : $('#usersAdmin').val(),
+			subject :  $('#message_subject').val(),
+			desc 	: $('#textareaid').val(),
+			owner	: msgOwner,
+ 		};
+		if(obj.reciver == "" || obj.subject == "" || obj.desc == ""){
+			return ;
+		}
+		if(Msh_notEmpty(msgCode) == true){
+			obj.replayCode = msgCode;
+		}
+		var response = validator_message('save-message',obj);
+		
+		if( response.result == false){
+			showMsg('نکته',response.msg,'W');
+			return ;
+		}
+		$.ajax({
+			type: "POST",
+			url: "message_new",
+			data: JSON.stringify(obj),
+			contentType: "application/json; charset=utf-8",
+			dataType: "json",
+			success: function(result) {
+				showMsg('ذخیره سازی','پیام با موفقیت ارسال گردید','S',2);
+				clearForm();
+			},
+			error: function(result, xhr, jqXHR){
+			}
+		});
+	}
+	
+	function clearForm(){
+		$('#usersAdmin').val('');
+		$('#message_subject').val('');
+		$('#textareaid').val('');
+		if(Msh_notEmpty(msgCode) == true){
+			window.location.href = '/message_new';
+		}
+	}
+</script>
+
+<body style="text-align : right; " >
+  <div class="container-scroller">
+    <!-- partial:partials/_navbar.html -->
+	<% if(data.rules == 2){ %> <% include ../users/mytoppannel.ejs %> <% } else if(data.rules == 1){ %> <% include ../admin/toppannel.ejs %> <% } %>
+    <!-- partial -->
+    <div class="container-fluid page-body-wrapper">
+      <!-- partial:partials/_sidebar.html -->
+		<% if(data.rules == 2){ %> <% include ../users/myrightpannel.ejs %> <% } else if(data.rules == 1){ %> <% include ../admin/rightpannel.ejs %> <% } %>
+      <!-- partial -->
+      <div class="main-panel">
+        <div class="content-wrapper">
+          <div class="row">
+            <div class="col-md-12 d-flex align-items-stretch grid-margin">
+              <div class="row flex-grow">
+                <div class="col-12">
+ 
+                <div class="col-12 stretch-card was-validated"   >
+                  <div class="card">
+                    <div class="card-body" id="_dataset">
+                      <h4 id="title_msg" class="card-title"></h4>
+					  
+                        <div id="repaly_group" class="form-group row" >
+                          <label for="textarea_repaly" class="col-sm-3 col-form-label">سابقه پیام :</label>
+						  <div class="col-sm-9 ">
+							<div id="textarea_repaly" contenteditable="true" style="font-size: small;"> </div>
+                            <!--<textarea id="textarea_repaly" disabled class="form-control" style="border-color: darkgrey;" type="text" rows="5"></textarea> -->
+                          </div>
+                        </div>
+						
+                        <div class="form-group row">
+                          <label for="usersAdmin" class="col-sm-3 col-form-label">دریافت کننده :</label>
+						  <div class="col-sm-9">
+                            <select class="custom-select mb-2 mr-sm-2 mb-sm-0" required style="margin-right:1px !important;" id="usersAdmin"  ></select>
+                          </div>
+                        </div>
+                        <div class="form-group row" >
+                          <label for="message_subject" class="col-sm-3 col-form-label">موضوع :</label>
+						  <div class="col-sm-9">
+                            <input type="text" class="form-control" required placeholder="ثبت موضوع"  aria-describedby="inputGroupPrepend2" id="message_subject">
+                          </div>
+                        </div>
+                        <div class="form-group row" >
+                          <label for="textareaid" class="col-sm-3 col-form-label">شرح :</label>
+						  <div class="col-sm-9 ">
+                            <textarea id="textareaid" required maxLength="250" class="form-control" type="text" rows="5" placeholder="شرح درخواست"></textarea>
+							<small id="fileHelp" class="form-text  ">کدهای html و کاراکترهای غیرمجاز پذیرفته نمی شوند</small>
+                          </div>
+                        </div>
+							<button class="btn btn-success mr-2" onclick="sendMessage()">ارسال</button>
+                      
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+        <!-- partial:partials/_footer.html -->
+			<% if(data.rules == 2){ %> <% include ../users/myfooter.ejs %> <% } else if(data.rules == 1){ %> <% include ../admin/footer.ejs %> <% } %>
+        <!-- partial -->
+      <!-- main-panel ends -->
+    </div>
+    <!-- page-body-wrapper ends -->
+ 
+  </div>
+  <!-- container-scroller -->
+</div>
+</body>
+
+</html>

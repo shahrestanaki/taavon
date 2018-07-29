@@ -1,0 +1,43 @@
+.ui-jqdialog .ui-jqdialog-titlebar-close {
+	color: white;
+	font-size: 21px;
+	margin: -5px -3px 0px 0;
+}
+.ui-jqgrid .ui-grid-ico-sort.ui-grid-ico-sort{
+	position : relative;
+}
+
+.modal-content-my {
+    position: absolute;
+    /*display: flex;*/
+    flex-direction: column;
+    width: 100%;
+    pointer-events: auto;
+    background-color: #F6F8FA;
+    background-clip: padding-box;
+    border: 1px solid #f3f3f3;
+    border-radius: 0.3rem;
+    outline: 0;
+}
+.ui-jqgrid .ui-jqgrid-bdiv {
+	text-align : right;
+}
+body{
+	font-family: "Vazir";
+}
+
+.sidebar .nav .nav-item .nav-link .menu-icon{
+	width : 40px;
+}
+
+.sidebar .nav .nav-item .nav-link .menu-title{
+	font-size: 1.0rem;
+}
+.sidebar .nav .nav-item .nav-link{
+	padding : 0rem 0rem;
+}
+
+.ui-widget{
+	font-family: "Vazir", sans-serif;
+	font-size : auto;
+}

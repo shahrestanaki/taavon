@@ -1,0 +1,127 @@
+<link rel="shortcut icon" href="/images/favicon.ico" type="image/x-icon" />
+<script type="text/javascript" src="/js/datepicker/moment-with-locales.js"></script> 
+<script type="text/javascript" src="/js/datepicker/moment-jalaali.js"></script> 
+ <%- include ../../public/js/validator-ui-admin.js %>
+ <%- include ../../public/js/validator-ui-public.js %>
+<script>
+	function getMyMessageCount(){
+		$.getJSON("/mymessagecount", function(result){
+			$('#messageCount').text(result);
+		});
+	}
+	
+	function logout(){
+		window.location = "/logout";
+	}
+	
+	function showMsg(title,msg,type,timer){
+		var allType = ["bg-primary","bg-success","bg-info","bg-warning","bg-danger","bg-light"];
+		for(var item in allType){
+			$('#myModal_dialog_header').removeClass(allType[item]);	
+		}
+		if(type === undefined || type === null){
+			type = "P";
+		}
+		switch(type){
+			case "P" :
+				$('#myModal_dialog_header').addClass(allType[0]);					
+			break;
+			case "S" :
+				$('#myModal_dialog_header').addClass(allType[1]);					
+			break;
+			case "I" :
+				$('#myModal_dialog_header').addClass(allType[2]);					
+			break;
+			case "W" :
+				$('#myModal_dialog_header').addClass(allType[3]);					
+			break;
+			case "D" :
+				$('#myModal_dialog_header').addClass(allType[4]);					
+			break;			
+			case "L" :
+				$('#myModal_dialog_header').addClass(allType[5]);					
+			break;			
+			default:
+			break;
+		}
+
+		$('#myModal_dialog_title').text(title);
+		$('#myModal_dialog_msg').text(msg);
+		$('#myModal_dialog').modal('show');
+		if(timer !== undefined){
+			setTimeout(closeMsg, timer*1000);
+		}
+	}
+	function closeMsg(){
+		$('#myModal_dialog').modal('hide');
+	}
+	 $.ajaxSetup({
+		beforeSend: function(xhr, settings) {
+			if (settings.type == 'POST' || settings.type == 'PUT' || settings.type == 'DELETE') {
+				function getCookie(name) {
+					var cookieValue = null;
+					if (document.cookie && document.cookie != '') {
+						var cookies = document.cookie.split(';');
+						for (var i = 0; i < cookies.length; i++) {
+							var cookie = jQuery.trim(cookies[i]);
+							// Does this cookie string begin with the name we want?
+							if (cookie.substring(0, name.length + 1) == (name + '=')) {
+								cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+								break;
+							}
+						}
+					}
+					return cookieValue;
+				}
+				if (!(/^http:.*/.test(settings.url) || /^https:.*/.test(settings.url))) {
+					// Only send the token to relative URLs i.e. locally.
+					xhr.setRequestHeader("X-CSRF-Token", getCookie('XSRF-TOKEN'));
+				}
+			}
+		},complete : function(xhr,status) {
+			switch(xhr.status) {
+				case 403:
+					window.location= "/403";
+					break;
+				case 404:
+					window.location= "/404";
+					break;
+				case 422 :
+					showMsg('توجه',xhr.responseText,'W');
+					break;	
+				case 500:
+					if(Msh_ContainUnicodePatern(xhr.responseText) == true){
+						showMsg('خطا',xhr.responseText,'D');
+					}else{
+						showMsg('خطا','هنگام انجام عملیات خطایی روی داده است . لطفا به مدیر سامانه اطلاع دهید','D');
+					}
+					break;
+				default:
+				break;
+			}			
+		}
+	});
+	</script>
+	
+<div id="myModal_dialog" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div id = "myModal_dialog_header" class="modal-header" >
+	    <h4 id="myModal_dialog_title" class="modal-title"></h4>
+        <button type="button" class="close" data-dismiss="modal" style="margin: -1rem -1rem -1rem">&times;</button>
+       
+      </div>
+      <div class="modal-body">
+        <p id="myModal_dialog_msg" ></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">تایید</button>
+      </div>
+    </div>
+
+  </div>
+</div>	
+
+	

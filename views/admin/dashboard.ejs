@@ -1,0 +1,253 @@
+  <%  include ./dashboard_header.ejs %>
+  <script>
+	var profile = {
+		fullname : '<%=data.fullname %>',
+		rulesname : '<%=data.rulesname %>',
+	};
+	
+	$( document ).ready(function() {
+		/*kDatepicker('workCalenderShow', { 
+			nextButtonIcon: "/images/datepicker/timeir_next.png"
+			, previousButtonIcon: "/images/datepicker/timeir_prev.png"
+			, forceFarsiDigits: true
+			, markToday: true
+			//, markHolidays: true
+			, highlightSelectedDay: true
+			//, sync: true
+			, gotoToday: true
+			, closeAfterSelect: true
+		});*/
+		getMyMessageCount();
+		createChart();
+	});
+	function changePassword(id){
+		var url = $(this).attr('href');
+		$.confirm({
+			id : 'deleteDialogConf',
+			title : 'تغییر رمز کاربر',
+			template: 'warning',
+			templateOk: 'primary',
+			message: 'کاراکترهای مجاز حروف انگلیسی و عدد و(@#_) می باشند',
+			labelOk: 'تایید',
+			labelCancel: 'انصراف',
+			elements : '<lable id="alertchangeUserPass" class="text-danger font-weight-bold mr-2 mb-0 no-wrap"></lable>'+
+						'<div id="divchangeUserPass1" class="col-9 grid-margin"><input type="password" class="form-control" id="changeUserPass1" placeholder="رمز عبور پیشین"> </div>'+
+						'<div id="divchangeUserPass2" class="col-9 grid-margin"><input type="password" class="form-control" id="changeUserPass2" placeholder="رمز عبور جدید"> </div>'+
+						'<div id="divchangeUserPass3" class="col-9 grid-margin"><input type="password" class="form-control" id="changeUserPass3" placeholder="تکرار رمز عبور جدید"> </div>',
+			onOk: function() {
+				Msh_bookmarkInput('changeUserPass1',null,false);
+				Msh_bookmarkInput('changeUserPass2',null,false);
+				Msh_bookmarkInput('changeUserPass3',null,false);
+				
+				var pass1 = $('#changeUserPass1').val();
+				var pass2 = $('#changeUserPass2').val();
+				var pass3 = $('#changeUserPass3').val();
+				
+				var testPass2 = Msh_CheckValidateData(["data:"+pass2+":پسورد,required:true,format:password,minSize:3,maxSize:20"]);
+				if(testPass2.result != true){
+					Msh_bookmarkInput('changeUserPass2','danger',true,testPass2.msg);
+					return ;
+				}
+				var testPass3 = Msh_CheckValidateData(["data:"+pass3+":پسورد,required:true,format:password,minSize:3,maxSize:20"]);
+				if(testPass3.result != true){
+					Msh_bookmarkInput('changeUserPass3','danger',true,testPass3.msg);
+					return ;
+				}
+				var testObj = Msh_passwordCheckerPatern('changeUserPass',pass2,pass3);
+				if(testObj.result != true){
+					Msh_bookmarkInput(testObj.obj,'danger',true,testObj.msg);
+				}else{
+				
+				obj = {
+					oldpassword :pass1,
+					password :pass2,
+				}
+				$.ajax({
+					type: "POST",
+					url: "changepass",
+					data: JSON.stringify(obj),
+					contentType: "application/json; charset=utf-8",
+					dataType: "json",
+					success: function(result) {
+						$('#deleteDialogConf').modal('hide');
+						showMsg('ذخیره سازی','عملیات ذخیره سازی با موفقیت انجام گرفت','S',2);
+					},
+					error: function(result, xhr, jqXHR){
+						$('#deleteDialogConf').modal('hide');
+					}
+					});
+				}
+			},
+			onCancel: function() {
+				//$response.html('Canceled!');
+			}
+		});
+	}
+	
+	function createChart(){
+		$.getJSON("/loginchart", function(result){
+			_data_Linechart.labels = [];
+			_data_Linechart.datasets[0].data = [];
+			$.each(result, function(i, field){
+				_data_Linechart.labels.push(moment(result[i].date, 'YYYY/MM/DD').format('jMM/jDD'));
+				_data_Linechart.datasets[0].data.push(result[i].count);
+			});
+			if ($("#lineChart").length) {
+				var lineChartCanvas = $("#lineChart").get(0).getContext("2d");
+				var lineChart = new Chart(lineChartCanvas, {
+				  type: 'line',
+				  data: _data_Linechart,
+				  options: _options_Linechart
+				});
+			}			
+		});
+	}
+  </script>
+
+<body style="text-align : right; " >
+  <div class="container-scroller">
+    <!-- partial:partials/_navbar.html -->
+	<%- include ./toppannel.ejs %>
+    <!-- partial -->
+    <div class="container-fluid page-body-wrapper">
+      <!-- partial:partials/_sidebar.html -->
+		<%- include ./rightpannel.ejs %>
+      <!-- partial -->
+      <div class="main-panel">
+        <div class="content-wrapper">
+          <div class="row">	  
+            <div class="col-xl-4 col-lg-4 col-md-4 col-sm-6 grid-margin stretch-card">
+              <div class="card card-statistics">
+                <div class="card-body">
+                  <div class="clearfix">
+                    <div class="float-left">
+                      <a href="javascript:changePassword(1)"><img src="/images/password.png" alt="Smiley face" height="95" width="95"></a>
+                    </div>
+                    <div class="float-right">
+					<a href="javascript:changePassword(1)"><h4 class="card-text text-right">رمز عبور</h4></a>
+					<div class="fluid-container">
+                        <p class="text-muted mt-3">تغییر رمز عبور کاربر جاری</p>
+                    </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>	  
+            <div class="col-xl-4 col-lg-4 col-md-4 col-sm-6 grid-margin stretch-card">
+              <div class="card card-statistics">
+                <div class="card-body">
+                  <div class="clearfix">
+                    <div class="float-left">
+                      <a href="/usersform"><img src="/images/users.png" alt="Smiley face" height="95" width="95"></a>
+                    </div>
+                    <div class="float-right">
+                      <a href="/usersform"><h4 class="card-text text-right">کاربران</h4></a>
+                      <div class="fluid-container">
+                        <p class="text-muted mt-3">مدیریت کاربران</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-xl-4 col-lg-4 col-md-4 col-sm-6 grid-margin stretch-card">
+              <div class="card card-statistics">
+                <div class="card-body">
+                  <div class="clearfix">
+                    <div class="float-left">
+                      <img src="/images/coin.png" alt="Smiley face" height="95" width="95">
+                    </div>
+                    <div class="float-right">
+                      <a href="/userstransform"><h4 class="card-text text-right">تراکنش ها</h4></a>
+                      <div class="fluid-container">
+                        <p class="text-muted mt-3">مدیریت تراکنش کاربر</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-6 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title">نمودار ورود کاربران</h4>
+                  <canvas id="lineChart" style="height:250px"></canvas>
+                </div>
+              </div>
+            </div>		
+            <div class="col-lg-12 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title">وضعیت آخرین تلاش های ورود کاربر جاری</h4>
+                  <table class="table table-hover">
+                    <thead  class="bg-primary">
+                      <tr>
+                        <th>تاریخ و زمان</th>
+                        <th class="d-none d-sm-table-cell">IP</th>
+                        <th>وضعیت</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                    <%for(var i=0;i< data.log.length ;i++){ %>
+                      <tr  <% if(data.log[i].status == 3){%>class="table-danger"<%}%> >
+                        <td><%=data.log[i].dateloginF%></td>
+                        <td class="d-none d-sm-table-cell"><%=data.log[i].ip%></td>
+                        <td><%=data.log[i].desc%></td>
+                      </tr>					
+					<%} %>					
+
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>			
+            <!--<div class="col-xl-3 col-lg-3 col-md-3 col-sm-6 grid-margin stretch-card">
+              <div class="card card-statistics">
+                <div class="card-body">
+                  <div class="clearfix">
+                    <div class="float-left">
+                      <img src="/images/temp.png" alt="Smiley face" height="95" width="95">
+                    </div>
+                    <div class="float-right">
+                      <h4 class="card-text text-right"></h4>
+                      <div class="fluid-container">
+                        <p class="text-muted mt-3"></p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-xl-3 col-lg-3 col-md-3 col-sm-6 grid-margin stretch-card">
+              <div class="card card-statistics">
+                <div class="card-body">
+                  <div class="clearfix">
+                    <div class="float-left">
+                      <img src="/images/temp.png" alt="Smiley face" height="95" width="95">
+                    </div>
+                    <div class="float-right">
+                      <h4 class="card-text text-right"></h4>
+                      <div class="fluid-container">
+                        <p class="text-muted mt-3"></p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>-->
+          </div>
+        </div>
+      </div>
+      </div>
+        <!-- partial:partials/_footer.html -->
+			<%- include ./footer.ejs %>
+        <!-- partial -->
+      <!-- main-panel ends -->
+    </div>
+    <!-- page-body-wrapper ends -->
+  </div>
+  <!-- container-scroller -->
+
+</body>
+
+</html>

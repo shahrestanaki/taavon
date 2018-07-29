@@ -1,0 +1,341 @@
+  <%- include ./userstrans_header.ejs %>
+	
+	<script>
+		$.jgrid.defaults.responsive = true;
+		$.jgrid.defaults.styleUI = 'BootstrapMy';
+	</script>
+ 
+    <script type="text/javascript">
+ 	var templateSearch = ""
+	templateSearch += "<div> نام و نام خانوادگی : </div><div>{person} </div>";
+	templateSearch += "<div> تاریخ تراکنش :</div><div> {transdate} </div>";
+	templateSearch += "<div> مبلغ :</div><div> {currency} </div>";
+	templateSearch += "<div> شرح :</div><div> {description} </div>";
+
+	var profile = {
+		fullname : '<%=data.fullname %>',
+		rulesname : '<%=data.rulesname %>',
+	};
+	
+	$( document ).ready(function() {
+		kDatepicker('newRecordCalenderShow', { 
+			nextButtonIcon: "/images/datepicker/timeir_next.png"
+			, previousButtonIcon: "/images/datepicker/timeir_prev.png"
+			, forceFarsiDigits: true
+			, markToday: true
+			//, markHolidays: true
+			, highlightSelectedDay: true
+			//, sync: true
+			, gotoToday: true
+			, closeAfterSelect: true
+		});		
+		getMyMessageCount();
+		//--------------------------------------
+		$(":input").inputmask();
+		//--------------------------------------
+		loadComboType();
+		//--------------------------------------
+		$('#newform').on('submit', function(e) {
+			e.preventDefault();
+			obj = {
+				currency	: $('#save_currency').val().split(',').join('').split('_').join(''),
+				transdate	: $('#newRecordCalenderShow').val(),
+				description	: $('#save_description').val(),
+				userId		: $('#autoSearch').attr('searchid'),
+				type  		: $('#save_type').val(),
+			}
+ 
+			var response = validator_transaction('save',obj);
+			
+			if( response.result == false){
+				showMsg('نکته',response.msg,'W');
+				return ;
+			}			
+			$.ajax({
+				url : "/userstrans",
+				type: "POST",
+				data: obj,
+				success: function (data) {
+					resetSaveFields();
+					showSumTrans($('#autoSearch').attr('searchid'));
+					$("#jqGrid").jqGrid('setGridParam',{datatype:'json'}).trigger('reloadGrid');
+				} 
+			});
+		});
+		//--------------------------------------
+		$('#autoSearch').autocomplete({
+			source: function (request, response) {
+				$.getJSON("/userlistlight?search=" + request.term , function (data) {
+					$('#autoSearch').attr('searchid',-1);
+					response($.map(data.rows, function (value, key) {
+						return {
+							value: value.fullname,
+							label: value.fullname,
+							id   : value.id,
+						};
+					}));
+				});
+			},
+			select: function( event, ui ) {
+				$('#autoSearch').attr('searchid',ui.item.id);
+			},
+			change: function( event, ui ) {
+				if($('#autoSearch').val() == ""){
+					$('#autoSearch').attr('searchid',-1);
+				}
+			},
+			autoFocus: true,
+			minLength: 2,
+			delay: 200
+		});	
+		//----------------------------
+		$("#jqGrid").jqGrid({
+			caption: "مشاهده و ویرایش تراکنش ها",
+			direction : "rtl",
+			url: '/userstrans',
+			editurl: '/userstransedit',
+			viewrecords: true,
+			mtype: "get",
+			datatype: "json",
+			colModel: [
+				{label:'عملیات', name:'act', width:75,sortable:false,editable: false,search:false,align : 'center'},
+				{label: 'id', name: 'id', key: true, editable: false, hidden:true, 
+				},
+				{ label: 'نام و نام خانوادگی',  name: 'person',  editable: false,classes: 'd-none d-sm-table-cell', 
+					editrules:{"required": true}, searchrules : {},align : 'center',sortable:false,
+				},
+				{ label : 'تاریخ تراکنش',  name: 'transdate',  editable: true, editrules:{"required": true,custom_func: validate_Date,custom: true,},
+					searchrules : {},align : 'center', 
+				},
+				{ label: 'مبلغ', name: 'currency',  editable: true, editrules:{"required": true}, searchrules : {},align : 'center;direction: ltr',
+				},
+				{ label: 'شرح',  name: 'description', editable: true,editrules:{"required": false,custom_func: validate_description,custom: true,},align : 'center',classes: 'd-none d-sm-block'
+				},		
+			],
+			gridComplete: function(){
+				designGridComplete();
+			},			
+			sortname: 'transdate', sortorder : 'desc', page: 1, viewrecords: true, autowidth : true,  rowNum: 10,/*hoverrows: true,*/height : 'auto',
+			pager: "#jqGridPager",
+			beforeRequest : function () {
+				applyClassesToHeaders($("#jqGrid")[0]);
+			},
+			postData: {
+				id: function() { return $('#autoSearch').attr('searchid') === undefined ? -1 : $('#autoSearch').attr('searchid'); },
+			},
+			rowNum: 20,
+			footerrow: true, // set a footer row
+			userDataOnFooter: true,
+		});
+
+		$('#jqGrid').navGrid('#jqGridPager',
+			{ edit: false, add: false, del: true, search: true, refresh: false, view: false, position: "left",	cloneToTop: false ,focusField : 1},
+			{},{},
+			{
+				mtype: "DELETE",
+				url: "/userstrans",
+				mtype: "DELETE",
+				errorTextFormat: function (data) {
+					return data.responseText
+				},
+				_afterSubmit: function (data) {
+					showSumTrans($('#autoSearch').attr('searchid'));
+				}
+			},
+			{
+				template: templateSearch,
+			}
+			);
+		});
+ 
+		function designGridComplete (){
+				var ids = jQuery("#jqGrid").jqGrid('getDataIDs');
+				var sumCurrency = 0;
+				for(var i=0;i < ids.length;i++){
+					$("#jqGrid").setRowData(ids[i], false, { height : 20 + (i * 2) });
+					var cl = ids[i];
+					be = "<div class='fa fa-edit' style=' font-size: 16px;margin-left: 10px;cursor: pointer;color:orange' onclick=\"jQuery('#jqGrid').editRow('"+cl+"',undefined,afterEditPress);\"  ></div>"; 
+					se = "<div class='fa fa-save' style=' font-size: 16px ;margin-left: 10px;cursor: pointer;color:green' onclick=\"jQuery('#jqGrid').saveRow('"+cl+"',aftersavefunc);\"  ></div>"; 
+					ce = "<div class='fa fa-retweet' style= font-size: 16px';margin-left: 10px;cursor: pointer;color:greencolor:green' onclick=\"jQuery('#jqGrid').restoreRow('"+cl+"');\" ></div>"; 
+					jQuery("#jqGrid").jqGrid('setRowData',ids[i],{act:be+se+ce});
+					
+					rowData = $("#jqGrid").jqGrid('getRowData', ids[i]);
+					sumCurrency += parseInt(MYMoneyToNumber(rowData['currency']));
+					rowData['currency'] = MYconvertToMoney(rowData['currency']);
+					if (rowData['currency'].indexOf('(') == 0) {
+						$("#jqGrid").jqGrid('setRowData', ids[i], rowData, "text-danger");
+					}else{
+						$("#jqGrid").jqGrid('setRowData', ids[i], rowData,false);
+					}
+				}
+ 
+				$('.cell_currency').html(MYconvertToMoney(sumCurrency)).addClass('text-primary');
+				$('.cell_transdate').html('مجموع').addClass('text-primary');
+		}
+		/* for hide in minimal size*/
+		function applyClassesToHeaders(table) {
+			var columnInfo, iCol, iRow,
+				htable = $(table.grid.hDiv).find("table.ui-jqgrid-htable")[0],
+				firstRow = table.rows[0];
+				colModel = $(table).jqGrid("getGridParam", "colModel");     
+			for (iCol = 0; iCol < colModel.length; iCol++) {
+				columnInfo = colModel[iCol];
+				if (columnInfo.classes) {
+					for (iRow = 0; iRow < htable.rows.length; iRow++) {
+						$(htable.rows[iRow].cells[iCol]).addClass(columnInfo.classes);
+					}
+					$(firstRow.cells[iCol]).addClass(columnInfo.classes);
+				}
+			}
+		}
+ 
+		function getTransForUser(){
+			var id = $('#autoSearch').attr('searchid');
+			if(Msh_isEmpty(id) || id == -1){
+				showMsg('تذکر','لطفا نام کاربر مورد نظر خود را جستجو نمایید','W');
+				return ;
+			}
+			showSumTrans(id);
+			
+			$("#jqGrid").jqGrid('setGridParam',{datatype:'json'}).trigger('reloadGrid');
+		}
+		
+		function showSumTrans(id){
+			$.getJSON("/userstranssum?id=" + id , function (data) {
+				if(data.sum < 0){
+					var num = Math.abs(data.sum);
+					$('#sumTrans').text('(' + FormatNumberBy3(num) + ')' + ' بدهکار');
+					$('#sumTrans').removeClass('text-primary');
+					$('#sumTrans').addClass('text-danger');
+				}else{
+					$('#sumTrans').text(FormatNumberBy3(data.sum) + ' طلبکار');
+					$('#sumTrans').addClass('text-primary');
+					$('#sumTrans').removeClass('text-danger');
+				}
+			});			
+		}
+ 
+		function loadComboType(){
+			var sel = $('#save_type');
+			result = {
+				obj1:{id:'',name:'یک مورد را انتخاب نمایید...'},
+				obj2:{id:_PublicVar_transactionTypeDebit,name:_PublicVar_transactionTypeDebitDesc},
+				obj3:{id:_PublicVar_transactionTypeCredit,name:_PublicVar_transactionTypeCreditDesc}
+			};
+			$.each(result, function(i, field){
+				var opt = document.createElement('option');
+				opt.innerHTML = result[i].name;
+				opt.value = result[i].id;
+				sel.append(opt);
+			});
+		}
+		
+		function resetSaveFields(){
+			$('#save_type').val(-1)
+			$('#newRecordCalenderShow').val('');
+			$('#save_currency').val('');
+			$('#save_description').val('');
+		}
+		
+		function aftersavefunc() {
+			showSumTrans($('#autoSearch').attr('searchid'));
+			$("#jqGrid").jqGrid('setGridParam',{datatype:'json'}).trigger('reloadGrid');
+		}
+		
+		function afterEditPress(){
+			var test = $('input[name=currency]').val().split(',').join('') ;
+			$('input[name=currency]').val(test);
+		}
+		
+		function validate_Date(value, column) {
+			if (Msh_datePatern(value) == false){
+				return [false, "فرمت تاریخ قابل قبول نیست"];
+			}else{
+				return [true, ""];
+			}
+		}
+		
+		function validate_description(value, column) {
+			if (Msh_textPatern(value) == false){
+				return [false, "فرمت دیتای وارد شده برای شرح قابل قبول نیست"];
+			}else{
+				return [true, ""];
+			}
+		}
+		
+    </script>
+<script src="/js/others/jquery.inputmask.bundle.min.js"></script>
+
+<body style="text-align : right; ">
+  <div class="container-scroller">
+    <!-- partial:partials/_navbar.html -->
+	<%- include ./toppannel.ejs %>
+    <!-- partial -->
+    <div class="container-fluid page-body-wrapper">
+      <!-- partial:partials/_sidebar.html -->
+		<%- include ./rightpannel.ejs %>
+      <!-- partial -->
+	  
+      <div class="main-panel">
+        <div class="content-wrapper">
+		  <!-- ----------------------------------------------------------------------------- -->
+ 			<div class="row">
+				<div class="col-12 grid-margin needs-validation">
+					<label for="autoSearch">جستجوی کاربر :</label>
+					<div class="input-group">
+						<span class="input-group-btn">
+							<button class="btn btn-secondary" onclick="getTransForUser()" type="button">نمایش</button>
+						</span>
+						<input type="text" class="form-control" id="autoSearch" required placeholder="نام کاربر خود را تایپ کنید">
+					</div>
+					<div class="input-group">
+					<span for="sumTrans">مجموع تراکنش های کاربر :</span> <label class="text-primary" id="sumTrans" style="direction:ltr"></label>
+					</div>
+				</div>
+ 			</div>
+			
+			<label>ثبت تراکنش جدید :</label>
+			<form id="newform" data-toggle="validator" role="form">
+			<div class=" row needs-validation " style=" margin-bottom: 10px;" >
+				
+				<div class="col-xl-2 col-lg-3 col-md-3 col-sm-6 grid-margin stretch-card ">
+					<input type="text" class="form-control calenderShow" style="direction: ltr;" id="newRecordCalenderShow" placeholder="تاریخ تراکنش"
+						required pattern="^(1[3-4])(\d{2})\/(0[1-9]|1[012])\/(0[1-9]|[12][0-9]|3[01])$" maxlength="10" data-inputmask="'mask': '1999/99/99'" >
+					 
+				</div>	
+				<div class="col-xl-2 col-lg-3 col-md-3 col-sm-6 grid-margin stretch-card  " >
+					<input type="text" class="form-control date"  id="save_currency" placeholder="مبلغ"
+						required pattern="^[_,0-9]*$" maxlength="16" data-inputmask="'mask': '999,999,999,999'">
+				</div>
+				<div class="col-xl-2 col-lg-3 col-md-3 col-sm-6 grid-margin stretch-card  " >
+					<select class="form-control" id="save_type" required placeholder="نوع واریز"></select>
+				</div>
+				<div class="col-xl-2 col-lg-3 col-md-3 col-sm-6 grid-margin stretch-card  " >
+					<input type="text" class="form-control"  id="save_description" placeholder="شرح"
+						pattern="^([\u0600-\u06FF,\u0590-\u05FF a-zA-Z0-9 @#$&-+./:;?_,]*)$" maxlength="30" >
+				</div>			
+				<div class="col-xl-2 col-lg-3 col-md-3 col-sm-6 grid-margin stretch-card  " >
+					<button type="submit" class="btn btn-success"><i class="fa fa-save"> </i>  ثبت</button>
+				</div>					
+			</div>
+			</form>
+			
+			<div class="row">
+
+				<div class="col-12 grid-margin">
+
+					<table id="jqGrid"></table>
+					<div id="jqGridPager"></div>
+				
+				</div>
+			</div>
+ 
+        </div>
+			<%- include ./footer.ejs %>
+      </div>
+    </div>
+  </div>
+
+</body>
+
+</html>

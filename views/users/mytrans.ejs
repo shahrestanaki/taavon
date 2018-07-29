@@ -1,0 +1,144 @@
+  <% include ./mytrans_header.ejs %>
+	
+	<script>
+		$.jgrid.defaults.responsive = true;
+		$.jgrid.defaults.styleUI = 'BootstrapMy';
+	</script>
+ 
+    <script type="text/javascript">
+ 	var templateSearch = ""
+	templateSearch += "<div> تاریخ تراکنش :</div><div> {transdate} </div>";
+	templateSearch += "<div> مبلغ :</div><div> {currency} </div>";
+	templateSearch += "<div> شرح :</div><div> {description} </div>";
+
+	var profile = {
+		fullname : '<%=data.fullname %>',
+		rulesname : '<%=data.rulesname %>',
+	};
+	
+	$( document ).ready(function() {
+		getMyMessageCount();
+		//--------------------------------------
+		showSumTrans();
+		//--------------------------------------
+		$("#jqGrid").jqGrid({
+			caption: "مشاهده تراکنش ها",
+			direction : "rtl",
+			url: '/mytrans',
+			viewrecords: true,
+			mtype: "get",
+			datatype: "json",
+			colModel: [
+				{ label : 'تاریخ تراکنش',  name: 'transdate',  editable: false, searchrules : {},align : 'center', 
+				},
+				{ label: 'مبلغ', name: 'currency',  editable: false, searchrules : {},align : 'center;direction: ltr',
+				},
+				{ label: 'شرح',  name: 'description', editable: false,align : 'center',
+				},		
+			],
+			gridComplete: function(){
+				var ids = jQuery("#jqGrid").jqGrid('getDataIDs');
+				var sumCurrency = 0;
+				for(var i=0;i < ids.length;i++){
+					rowData = $("#jqGrid").jqGrid('getRowData', ids[i]);
+					sumCurrency += parseInt(MYMoneyToNumber(rowData['currency']));
+					rowData['currency'] = MYconvertToMoney(rowData['currency']);
+					if (rowData['currency'].indexOf('(') == 0) {
+						$("#jqGrid").jqGrid('setRowData', ids[i], rowData, "text-danger");
+					}else{
+						$("#jqGrid").jqGrid('setRowData', ids[i], rowData,false);
+					}
+				}
+ 
+				$('.cell_currency').html(MYconvertToMoney(sumCurrency)).addClass('text-primary');
+				$('.cell_transdate').html('مجموع').addClass('text-primary');
+			},			
+			sortname: 'person', sortorder : 'desc', page: 1, viewrecords: true, autowidth : true,  rowNum: 10,height : 'auto',
+			pager: "#jqGridPager",
+			beforeRequest : function () {
+				applyClassesToHeaders($("#jqGrid")[0]);
+			},
+			rowNum: 20,
+			footerrow: true, // set a footer row
+			userDataOnFooter: true,
+		});
+
+		$('#jqGrid').navGrid('#jqGridPager',
+			{ edit: false, add: false, del: false, search: true, refresh: true, view: false, position: "left",	cloneToTop: false ,focusField : 1},
+			{},{},{},
+			{
+				template: templateSearch,
+			}
+			);
+		});
+ 
+				/* for hide in minimal size*/
+		function applyClassesToHeaders(table) {
+			var columnInfo, iCol, iRow,
+				htable = $(table.grid.hDiv).find("table.ui-jqgrid-htable")[0],
+				firstRow = table.rows[0];
+				colModel = $(table).jqGrid("getGridParam", "colModel");     
+			for (iCol = 0; iCol < colModel.length; iCol++) {
+				columnInfo = colModel[iCol];
+				if (columnInfo.classes) {
+					for (iRow = 0; iRow < htable.rows.length; iRow++) {
+						$(htable.rows[iRow].cells[iCol]).addClass(columnInfo.classes);
+					}
+					$(firstRow.cells[iCol]).addClass(columnInfo.classes);
+				}
+			}
+		}
+ 
+		function showSumTrans(id){
+			$.getJSON("/mystranssum", function (data) {
+				if(data.sum < 0){
+					var num = Math.abs(data.sum);
+					$('#sumTrans').text('(' + FormatNumberBy3(num) + ')' + ' بدهکار');
+					$('#sumTrans').removeClass('text-primary');
+					$('#sumTrans').addClass('text-danger');
+				}else{
+					$('#sumTrans').text(FormatNumberBy3(data.sum) + ' طلبکار');
+					$('#sumTrans').addClass('text-primary');
+					$('#sumTrans').removeClass('text-danger');
+				}
+			});			
+		}
+ 		
+    </script>
+<script src="/js/others/jquery.inputmask.bundle.min.js"></script>
+
+<body style="text-align : right; ">
+  <div class="container-scroller">
+    <!-- partial:partials/_navbar.html -->
+	<%- include ./mytoppannel.ejs %>
+    <!-- partial -->
+    <div class="container-fluid page-body-wrapper">
+      <!-- partial:partials/_sidebar.html -->
+		<%- include ./myrightpannel.ejs %>
+      <!-- partial -->
+	  
+      <div class="main-panel">
+        <div class="content-wrapper">
+		  <!-- ----------------------------------------------------------------------------- -->
+			<div class="row">
+				<div class="col-12 grid-margin needs-validation">
+					<div class="input-group">
+						<span for="sumTrans">مجموع تراکنش های کاربر جاری :</span> <label class="text-primary" id="sumTrans" style="direction:ltr"></label>
+					</div>
+				</div>
+ 			</div>
+			<div class="row">
+				<div class="col-12 grid-margin">
+					<table id="jqGrid"></table>
+					<div id="jqGridPager"></div>
+				</div>
+			</div>
+        </div>
+			<%- include ./myfooter.ejs %>
+      </div>
+    </div>
+  </div>
+
+</body>
+
+</html>

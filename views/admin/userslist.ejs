@@ -1,0 +1,441 @@
+  <%- include ./userslist_header.ejs %>
+	
+    <script type="text/javascript">
+		//$.jgrid.defaults.width = 780;
+		$.jgrid.defaults.responsive = true;
+		$.jgrid.defaults.styleUI = 'BootstrapMy';
+
+	var templateNew = ""
+	//template += "<div style='margin-left:15px;'><div> id <sup>*</sup>:</div><div> {id} </div>";
+	///template += "<div> person: </div><div>{person} </div>";
+	templateNew += "<div> نام : </div><div>{name} </div>";
+	templateNew += "<div> نام خانوادگی : </div><div>{famili} </div>";
+	templateNew += "<div> نام کاربری :</div><div> {username} </div>";
+	templateNew += "<div> رمز عبور :</div><div> {password} </div>";
+	templateNew += "<div> وضعیت :</div><div> {statusname} </div>";
+	templateNew += "<div> نقش کاربری :</div><div> {rulesname} </div>";
+	//templateNew += "<hr style='width:100%;'/>";
+	templateNew += "<div> {sData} {cData}  </div></div>";
+
+	var templateEdit = ""
+	templateEdit += "<div> نام : </div><div>{name} </div>";
+	templateEdit += "<div> نام خانوادگی : </div><div>{famili} </div>";
+	templateEdit += "<div> نام کاربری :</div><div> {username} </div>";
+	templateEdit += "<div> وضعیت :</div><div> {statusname} </div>";
+	templateEdit += "<div> نقش کاربری :</div><div> {rulesname} </div>";
+	//templateEdit += "<hr style='width:100%;'/>";
+	templateEdit += "<div> {sData} {cData}  </div></div>";
+
+	var templateSearch = ""
+	templateSearch += "<div> نام : </div><div>{name} </div>";
+	templateSearch += "<div> نام خانوادگی : </div><div>{famili} </div>";
+	templateSearch += "<div> نام کاربری :</div><div> {username} </div>";
+	templateSearch += "<div> وضعیت :</div><div> {status} </div>";
+	templateSearch += "<div> نقش کاربری :</div><div> {rules} </div>";
+	
+	var profile = {
+		fullname : '<%=data.fullname %>',
+		rulesname : '<%=data.rulesname %>',
+	};
+	$(document).ready(function () {
+		getMyMessageCount();
+			/*kDatepicker('workCalenderShow', { 
+				nextButtonIcon: "/images/datepicker/timeir_next.png"
+				, previousButtonIcon: "/images/datepicker/timeir_prev.png"
+				, forceFarsiDigits: true
+				, markToday: true
+				//, markHolidays: true
+				, highlightSelectedDay: true
+				, sync: true
+				, gotoToday: true
+				, closeAfterSelect: true
+			});*/
+ 
+			//$.jgrid.styleUI.Bootstrap.base.rowTable = "table table-bordered table-striped";
+            $("#jqGrid").jqGrid({
+				caption: "نمایش کاربران سامانه",
+				direction : "rtl",
+				url: '/userslist',
+				//editurl: '/userslist/save_edit',
+				viewrecords: true,
+                mtype: "get",
+                datatype: "json",
+                colModel: [{label: 'id', name: 'id', width: 75, key: true, editable: false, hidden:true, 
+						//editrules : { required: true},
+						//searchrules : {"required": true,"number" : true,"minValue": 1 },
+						//sorttype: 'integer',
+					},
+                    { label: 'نام',  name: 'name', editable: true, // must set editable to true if you want to make the field editable
+						editrules:{"required": true,custom_func:validator_userList,custom: true}, searchrules : {}, 
+                    },
+                    { label : 'نام خانوادگی', name: 'famili',searchName : 'famili', editable: true, editrules:{"required": true ,custom_func:validator_userList,custom: true}, searchrules : {}
+                    },
+                    { label: 'نام کاربری', name: 'username',searchName : 'username', editable: true, editrules:{"required": true,custom_func: validator_userList,custom: true,}, searchrules : {}
+                    },
+                    { label: 'پسورد',  name: 'password',classes: 'd-none d-sm-table-cell', search:false,
+						/*formatter: function () {
+							return "<img src='/images/Checked-32.png' alt='my image' style='cursor:pointer' onclick='getSelectedRow("+password+")'/>";
+						},*/
+						align:"center", formatter:designImgForPassword, editrules:{"required": true,custom_func: validator_userList,custom: true,}, editable: true,/*for new !*/
+                    },					
+                    { label: 'وضعیت',  name: 'statusname', index : 'status',    editable: true, editrules:{"required": true,custom_func: validator_userList,custom: true}, edittype: "select",
+                        searchrules : {value: "0:" + _PublicVar_userStatusDisableDesc + ";1:"+_PublicVar_userStatusActiveDesc+";2:"+_PublicVar_userStatusLockDesc},
+						stype: "select",searchoptions: {value: "0:" + _PublicVar_userStatusDisableDesc + ";1:"+_PublicVar_userStatusActiveDesc+";2:"+_PublicVar_userStatusLockDesc},
+						editoptions: {value: "1:" + _PublicVar_userStatusActiveDesc + ";0:"+_PublicVar_userStatusDisableDesc}
+                    },
+                    { label: 'نقش کاربری', name: 'rulesname',classes: 'd-none d-sm-table-cell' , index : 'rules',  editable: true, editrules:{"required": true,custom_func: validator_userList,custom: true}, edittype: "select",
+						editoptions: {value: "2:" + _PublicVar_userCommonDesc + ";1:"+_PublicVar_userAdminDesc},
+						searchoptions: {value: "1:" + _PublicVar_userAdminDesc + ";2:"+_PublicVar_userCommonDesc},
+						stype: "select", searchrules : {}
+                    },
+                    { label: 'وضعیت فعلی',name: 'useronlineDesc',index : 'useronline',classes: 'd-none d-sm-table-cell', align:"center", 
+						formatter:designStateForOnline, editable: false,search:true,
+						stype: "select",searchoptions : {value: "1:" + _PublicVar_useronlineDesc + ";0:"+_PublicVar_userOffLineDesc}
+                    },	
+                    { label: 'سابقه ورود کاربر',classes: 'd-none d-sm-table-cell', search:false,align:"center", formatter:designImgForLogLogin, editable: false,
+                    },
+                    { label: 'پایان جلسه',classes: 'd-none d-sm-table-cell', search:false,align:"center", formatter:designImgForEjectUser, editable: false,
+                    },						
+                ],
+				sortname: 'name', sortorder : 'asc', page: 1, viewrecords: true, autowidth : true,  height: 'auto',   rowNum: 10,
+				/*loadonce: true,*/
+				//hoverrows: true,
+                //width: 750 ,
+                pager: "#jqGridPager",
+				gridComplete: initGrid,
+				beforeRequest : function () {
+					applyClassesToHeaders($("#jqGrid")[0]);
+				},
+            });
+ 
+            $('#jqGrid').navGrid('#jqGridPager',
+                // the buttons to appear on the toolbar of the grid
+                { edit: true, add: true, del: true, search: true, refresh: true, view: false, position: "left",	cloneToTop: false ,focusField : 1},
+                // options for the Edit Dialog
+                {
+                    //editCaption: "The Edit Dialog",
+					template: templateEdit,
+					headerWarn : "text-danger",
+					url: "/userslist",
+					mtype: "PUT",
+                    errorTextFormat: function (data) {
+                        return 'Error: ' + data.responseText
+                    },
+					closeAfterEdit: true,
+					reloadAfterSubmit : true,
+				
+					/*ajaxEditOptions: {
+						beforeSend: function(jqXHR) {
+							var csrfToken = '<= csrfToken >'; 
+							jqXHR.setRequestHeader('X-CSRF-Token', csrfToken);
+						}
+					},*/
+					/*editData: {
+						csrfToken: '<= csrfToken>'
+					}	*/				
+                },
+                // options for the Add Dialog
+                {
+					template: templateNew,
+					mtype: "POST",
+					url: "/userslist" ,
+					closeAfterAdd: true,
+                    errorTextFormat: function (data) {
+                        return 'Error: ' + data.responseText
+                    },
+                },
+                // options for the Delete Dailog
+                {
+					mtype: "DELETE",
+					url: "/userslist",
+                    errorTextFormat: function (data) {
+                        return 'Error: ' + data.responseText
+					},
+					/*ajaxDelOptions: {
+						beforeSend: function(jqXHR) {
+							var csrfToken = '<= csrfToken >'; 
+							jqXHR.setRequestHeader('X-CSRF-Token', csrfToken);
+						}
+					},*/
+                },
+                // options for the sort Dailog
+                {
+					template: templateSearch,//showQuery: true
+				}
+				);
+        });
+		
+		/* for hide in minimal size*/
+		function applyClassesToHeaders(table) {
+			var columnInfo, iCol, iRow,
+				htable = $(table.grid.hDiv).find("table.ui-jqgrid-htable")[0],
+				firstRow = table.rows[0];
+				colModel = $(table).jqGrid("getGridParam", "colModel");     
+			for (iCol = 0; iCol < colModel.length; iCol++) {
+				columnInfo = colModel[iCol];
+				if (columnInfo.classes) {
+					for (iRow = 0; iRow < htable.rows.length; iRow++) {
+						$(htable.rows[iRow].cells[iCol]).addClass(columnInfo.classes);
+					}
+					$(firstRow.cells[iCol]).addClass(columnInfo.classes);
+				}
+			}
+		}
+		
+		function initGrid() {
+            $(".jqgrow", "#jqGrid").contextMenu('contextMenu', {
+				menuStyle :{
+					width : "150px",
+					left : "200px",
+				},
+       itemHoverStyle: {
+            border: '1px solid #79b7e7',
+            color: '#1d5987',
+			left : "200px !impotant",
+            backgroundColor: '#d0e5f5'
+        },				
+                bindings: { 
+					'edit': function (t) {  editRow();  },
+                    'add': function (t) {  addRow();  },
+                    'del': function (t) {  delRow();  }
+                },
+                onContextMenu: function (event, menu) {
+                    var rowId = $(event.target).parent("tr").attr("id")
+                    var grid = $("#jqGrid");
+                    grid.setSelection(rowId);
+
+                    return true;
+                }
+            });
+
+            function editRow() {
+                var grid = $("#jqGrid");
+                var rowKey = grid.getGridParam("selrow");
+                if (rowKey) {
+                    grid.editGridRow(rowKey, {closeAfterEdit: true,mtype: "PUT",url: "/userslist",template: templateEdit });
+                }
+                else {
+                    alert("No rows are selected");
+                }
+            }
+			
+            function addRow() {
+                var grid = $("#jqGrid");
+                grid.editGridRow(
+				"new", { closeAfterAdd: true,mtype: "POST",url: "/userslist",template: templateNew}
+				);
+            }
+
+            function delRow() {
+                var grid = $("#jqGrid");
+                var rowKey = grid.getGridParam("selrow");
+                if (rowKey) {
+                    grid.delGridRow(rowKey,{mtype: "DELETE",url: "/userslist" });
+                }
+                else {
+                    alert("No rows are selected");
+                }
+            }
+        }
+		
+		function designImgForPassword(cellvalue, options, rowObject) {
+			return "<img src='/images/icon/Grid-Edit.png' height='24' alt='Grid-Edit' style='cursor:pointer' data-toggle='tooltip' title='تغییر رمز عبور' onclick='changePassword("+rowObject.id+")'/>";
+        }
+		
+		
+		function designImgForLogLogin(cellvalue, options, rowObject) {
+			return "<img src='/images/icon/login-log.png' height='24' alt='LogLogin' style='cursor:pointer' data-toggle='tooltip' title='سابقه ورود کاربر' onclick='showLogLogin("+rowObject.id+")'/>";
+        }
+		
+		function designStateForOnline(cellvalue, options, rowObject){
+			if(cellvalue == _PublicVar_useronlineDesc){
+				return "<label class='text-success'>"+cellvalue+"</label>";
+			}else if (cellvalue == _PublicVar_userOffLineDesc){
+				return "<label class='text-dark'>"+cellvalue+"</label>";
+			}
+		}
+		
+		function designImgForEjectUser(cellvalue, options, rowObject) {
+			return "<img src='/images/icon/log-out.png' height='24' alt='log-out' style='cursor:pointer' data-toggle='tooltip' title='پایان جلسه' onclick='ejectUser("+rowObject.id+")'/>";
+        }
+		
+		function changePassword(id){
+			var url = $(this).attr('href');
+			$.confirm({
+				id : 'deleteDialogConf',
+				title : 'تغییر رمز کاربر',
+				template: 'warning',
+				templateOk: 'primary',
+				message: 'کاراکترهای مجاز حروف انگلیسی و عدد و(@#_) می باشند',
+				labelOk: 'تایید',
+				labelCancel: 'انصراف',
+				elements : '<lable id="alertchangeUserPass" class="text-danger font-weight-bold mr-2 mb-0 no-wrap"></lable>'+
+							'<div id="divchangeUserPass1" class="col-9 grid-margin"><input type="password" class="form-control" id="changeUserPass1" placeholder="رمز عبور جدید"> </div>'+
+							'<div id="divchangeUserPass2" class="col-9 grid-margin"><input type="password" class="form-control" id="changeUserPass2" placeholder="تکرار رمز عبور جدید"> </div>',
+				onOk: function() {
+					Msh_bookmarkInput('changeUserPass1',null,false);
+					Msh_bookmarkInput('changeUserPass2',null,false);
+					var pass1 = $('#changeUserPass1').val();
+					var pass2 = $('#changeUserPass2').val();
+					
+					var testPass1 = Msh_CheckValidateData('password',{val:pass1,min:1,max:10});
+					if(testPass1.result != true){
+						Msh_bookmarkInput('changeUserPass1','danger',true,testPass1.msg);
+						return ;
+					}
+					var testPass2 = Msh_CheckValidateData('password',{val:pass2,min:1,max:10});
+					if(testPass2.result != true){
+						Msh_bookmarkInput('changeUserPass2','danger',true,testPass2.msg);
+						return ;
+					}					
+					
+					var testObj = Msh_passwordCheckerPatern('changeUserPass',pass1,pass2);
+					if(testObj.result != true){
+						Msh_bookmarkInput(testObj.obj,'danger',true,testObj.msg);
+					}else{
+					obj = {
+						id :id,
+						password :pass1,
+					}
+					$.ajax({
+						type: "PUT",
+						url: "userschangepass",
+						data: JSON.stringify(obj),
+						contentType: "application/json; charset=utf-8",
+						dataType: "json",
+						success: function(result) {
+							$('#deleteDialogConf').modal('hide');
+							showMsg('ذخیره سازی','عملیات ذخیره سازی با موفقیت انجام گرفت','S',2);
+						},
+						error: function(err){
+							$('#deleteDialogConf').modal('hide');
+							/*if(err.status == 403){
+								$('#deleteDialogConf').modal('hide');
+							}else{
+								Msh_bookmarkInput('changeUserPass1','danger',true,'خطایی در عملیات ذخیره سازی روی داده است');
+							}*/
+						}
+						});
+					}
+				},
+				onCancel: function() {
+					//$response.html('Canceled!');
+				}
+			});
+		}
+		
+		function showLogLogin(id){
+			obj = {
+				id :id,
+			}
+			$.ajax({
+				type: "GET",
+				url: "usersloglogin",
+				data: obj,
+				contentType: "application/json; charset=utf-8",
+				dataType: "json",
+				success: function(result) {
+					showModelLogLogin(result.rows);
+				},
+				error: function(result){
+					/////Msh_bookmarkInput('changeUserPass1','danger',true,'خطایی در عملیات ذخیره سازی روی داده است');
+				}
+			});	
+		}
+
+		function showModelLogLogin(data){
+			var eTable="<table class='table table-striped table-bordered table-sm'><thead class='bg-primary'><tr></tr><tr><th>تاریخ و زمان</th><th class='d-none d-sm-table-cell'>IP</th><th>وضعیت</th</tr></thead><tbody>"
+			for(var i=0; i<data.length;i++) {
+				eTable += "<tr";
+				if(data[i]['status'] == 3){
+					eTable += " class='table-danger' ";
+				}
+				eTable +=">";
+				eTable += "<td>"+data[i]['dateloginF']+"</td>";
+				eTable += "<td class='d-none d-sm-table-cell'>"+data[i]['ip']+"</td>";
+				eTable += "<td>"+data[i]['desc']+"</td>";
+				eTable += "</tr>";
+			}
+			eTable +="</tbody></table>";
+			
+			var url = $(this).attr('href');
+			$.confirm({
+				id : 'logLoginDialog',
+				title : 'سابقه ورود کاربر',
+				template: 'info',
+				templateOk: 'primary',
+				message: '',
+				labelOk: 'بستن',
+				elements : eTable ,
+				onOk: function() {
+					$('#logLoginDialog').modal('hide');
+				},
+				buttonCancel : null
+
+			});
+		}
+		
+		function ejectUser(id){
+			obj = {
+				id :id,
+			}
+			$.ajax({
+				type: "DELETE",
+				url: "ejectuser",
+				data: JSON.stringify(obj),
+				contentType: "application/json; charset=utf-8",
+				dataType: "json",
+				success: function(result) {
+					$('#jqGrid').trigger( 'reloadGrid' );
+				}
+			});	
+		}
+					
+    </script>
+<body style="text-align : right; ">
+  <div class="container-scroller">
+    <!-- partial:partials/_navbar.html -->
+	<%- include ./toppannel.ejs %>
+    <!-- partial -->
+    <div class="container-fluid page-body-wrapper">
+      <!-- partial:partials/_sidebar.html -->
+		<%- include ./rightpannel.ejs %>
+      <!-- partial -->
+      <div class="main-panel">
+        <div class="content-wrapper">
+ 
+		  <!-- ----------------------------------------------------------------------------- -->
+          <div class="row">
+			<div class="col-12 grid-margin">
+
+				<table id="jqGrid"></table>
+				<div id="jqGridPager"></div>
+			
+			</div>
+			<div class="contextMenu row" id="contextMenu" style="display:none;">
+				<ul >
+					<li id="add">
+						<span class="glyphicon glyphicon-plus" style="float:left"></span>
+						<span style="font-size:100%; margin-left:10px;">افزودن</span>
+					</li>
+					<li id="edit">
+						<span class="glyphicon glyphicon-pencil" style="float:left"></span>
+						<span style="font-size:100%; margin-left:10px;">ویرایش مورد</span>
+					</li>                
+					<li id="del">
+						<span class="glyphicon glyphicon-trash" style="float:left"></span>
+						<span style="font-size:100%; margin-left:10px;">حذف مورد</span>
+					</li>                
+				</ul>
+			</div>
+          </div>
+ 
+        </div>
+			<%- include ./footer.ejs %>
+      </div>
+    </div>
+  </div>
+
+</body>
+
+</html>

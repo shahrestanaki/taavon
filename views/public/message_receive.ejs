@@ -1,0 +1,298 @@
+  <% include ./message_header.ejs %>
+  
+<script type="text/javascript">
+	var profile = {
+		fullname : '<%=data.fullname %>',
+		rulesname : '<%=data.rulesname %>',
+	};
+   
+	$.jgrid.defaults.responsive = true;
+	$.jgrid.defaults.styleUI = 'BootstrapMy';
+		
+	var templateSearch = ""
+	templateSearch += "<div> نام : </div><div>{name} </div>";
+	templateSearch += "<div> نام خانوادگی : </div><div>{famili} </div>";
+	templateSearch += "<div> نام کاربری :</div><div> {username} </div>";
+	templateSearch += "<div> وضعیت :</div><div> {status} </div>";
+	templateSearch += "<div> نقش کاربری :</div><div> {rules} </div>";
+ 
+	var rowData = new Array();
+	$(document).ready(function () {
+		getMyMessageCount();
+		
+            $("#jqGrid").jqGrid({
+				caption: "پیام های دریافت شده",
+				direction : "rtl",
+				url: '/message_received',
+				viewrecords: true,
+                mtype: "get",
+                datatype: "json",
+                colModel: [
+                    { label: 'کد پیام',  name: 'code',  searchrules : {},classes: 'd-none d-sm-table-cell'
+                    },
+                    { label: 'پیام وابسته',  name: 'replayCode',  searchrules : {},classes: 'd-none d-sm-table-cell'
+                    },					
+                    { label : 'موضوع', name: 'subject', searchrules : {}
+                    },
+                    { label : 'ارسال کننده', name: 'sendername', searchrules : {},classes: 'd-none d-sm-table-cell'
+                    },
+					{ label: 'زمان ارسال',  name: 'datecreateF', searchrules : {},classes: 'd-none d-sm-table-cell'
+                    },	
+                    { label: 'وضعیت پیام',name: 'statusname',index : 'status', align:"center",
+						formatter:designStatusColor, search:true,
+						stype: "select",searchoptions : {value: "1:" + _PublicVar_messageUnreadDesc + ";2:"+_PublicVar_messageAnswerDesc + ";3:"+_PublicVar_messageCloseDesc}
+                    },
+					{ label: 'مشاهده و بیشتر', name: 'desc' , search:false,align:"center", formatter:designImgForShowMsg ,editable: false,
+                    },					
+                ],
+				multiSort: true, sortorder : '',sortname: "status asc , datecreateF desc ",  page: 1, viewrecords: true, autowidth : true,  height: 'auto',   rowNum: 10,
+                pager: "#jqGridPager",
+				beforeRequest : function () {
+					applyClassesToHeaders($("#jqGrid")[0]);
+					rowData.length = 0;
+				},
+				beforeRefresh: function () {
+				}
+            }).trigger("reloadGrid");
+ 
+            $('#jqGrid').navGrid('#jqGridPager',
+                { edit: false, add: false, del: true, search: true, refresh: true, view: false, position: "left",cloneToTop: true ,focusField : 1},
+                // options for the Edit Dialog
+                {
+                },
+                // options for the Add Dialog
+                {
+                },
+                // options for the Delete Dailog
+                {
+					mtype: "DELETE",
+					url: "/userslist",
+                    errorTextFormat: function (data) {
+                        return 'Error: ' + data.responseText
+					},
+                },
+                // options for the sort Dailog
+                {
+					template: templateSearch,//showQuery: true
+				}
+				);
+				/*).navButtonAdd('jqGridPager',{
+					buttonicon: "ui-icon-pencil",
+                    title: "Edit",
+                    caption: "Edit",
+                    position: "last",
+                    //onClickButton: customButtonClicked
+				});*/
+  	
+        });
+		
+		/* for hide in minimal size*/
+		function applyClassesToHeaders(table) {
+			var columnInfo, iCol, iRow,
+				htable = $(table.grid.hDiv).find("table.ui-jqgrid-htable")[0],
+				firstRow = table.rows[0];
+				colModel = $(table).jqGrid("getGridParam", "colModel");     
+			for (iCol = 0; iCol < colModel.length; iCol++) {
+				columnInfo = colModel[iCol];
+				if (columnInfo.classes) {
+					for (iRow = 0; iRow < htable.rows.length; iRow++) {
+						$(htable.rows[iRow].cells[iCol]).addClass(columnInfo.classes);
+					}
+					$(firstRow.cells[iCol]).addClass(columnInfo.classes);
+				}
+			}
+		}
+ 
+		function designStatusColor(cellvalue, options, rowObject){
+			if(cellvalue == _PublicVar_messageUnreadDesc){
+				return "<label class='badge badge-warning'>"+cellvalue+"</label>";
+			}else if (cellvalue == _PublicVar_messageAnswerDesc){
+				return "<label class='badge badge-teal'>"+cellvalue+"</label>";
+			}else if (cellvalue == _PublicVar_messageSeeDesc){
+				return "<label class='badge btn-secondary'>"+cellvalue+"</label>";
+			}else if (cellvalue == _PublicVar_messageCloseDesc){
+				return "<label class='badge badge-dark'>"+cellvalue+"</label>";
+			}
+		}
+		
+ 		function designImgForShowMsg(cellvalue, options, rowObject) {
+			rowData.push(rowObject);
+			return "<img src='/images/icon/message-replay.png' height='32' alt='message-replay' style='cursor:pointer' "
+				+ " data-toggle='tooltip' title='مشاهده و بیشتر' onclick='messageReplay(\""+rowObject.code+"\")'/>";
+        }
+
+		function messageReplay(code){
+			var rowSelect = rowData.find(function (obj) { return obj.code === code; });
+			var url = $(this).attr('href');
+			$.confirm({
+				id : 'messageReplay',
+				title : 'پاسخ به پیام دریافتی',
+				template: 'primary',
+				templateOk: 'success',
+				message: '',
+				labelOk: 'انجام عملیات',
+				labelCancel: 'انصراف',
+				elements : '<lable id="alertmessage" class="text-danger font-weight-bold mr-2 mb-0"  style="word-wrap: break-word"></lable>'
+							+ '<h6 class="text-gray" style="font-size: 10px;margin-right: 10px;">“'+rowSelect.sendername+'” پیام داده است :</h6>'
+							+ '<label disabled id="message1" class="form-control" type="text" style="width: 250px;height:100%;margin-right: 10px;">'+rowSelect.desc+'</label>'
+							+ '<div id="divmessage2" class="col-9 grid-margin"> ' 
+							+ '<textarea id="message2" maxLength="250" class="form-control" type="text" rows="5" placeholder="ارسال پاسخ سریع" style="width: 250px;height: 160px;"></textarea></div>'
+							+ '<div id="divmessage3" class="col-9 grid-margin"> ' 
+							+ '<select id="message3" class="custom-select mb-2 mr-sm-2 mb-sm-0"  style="width: 250px;margin-right: -8px;">'
+								+ '<option value="-1">......</option><option value="'+_PublicVar_replayMessage1+'">'+_PublicVar_replayMessageDesc1+'</option>'
+								+ '	<option value="'+_PublicVar_replayMessage2+'">'+_PublicVar_replayMessageDesc2+'</option>'
+								+ '	<option value="'+_PublicVar_replayMessage3+'">'+_PublicVar_replayMessageDesc3+'</option>'
+								+ '	<option value="'+_PublicVar_replayMessage4+'">'+_PublicVar_replayMessageDesc4+'</option></select></div>',
+							
+				onOk: function() {
+					Msh_bookmarkInput('message2',null,false);
+					var answer = $('#message2').val();
+					var selected = $('#message3').val();
+					if(selected == "-1"){
+						Msh_bookmarkInput('message3','danger',true,'لطفا یکی از موارد را انتخاب نمایید');
+						return ;
+					}else if(rowSelect.status == _PublicVar_messageClose && selected != _PublicVar_replayMessage1){
+						Msh_bookmarkInput('message3','danger',true,'انجام عملیات تنها بر روی پیام های در دست بررسی امکانپذیر است');
+						return ;
+					}else if((selected == _PublicVar_replayMessage2 || selected == _PublicVar_replayMessage4) && Msh_isEmpty(answer) == true){
+						Msh_bookmarkInput('message2','danger',true,'لطفا پاسخ را درج فرمایید');
+						return ;
+					}
+					switch(selected){
+						case _PublicVar_replayMessage1 :
+							obj = {
+								code    	: rowSelect.code,
+								status  	: selected,
+							}
+							var response = validator_message('changeStatus',obj);
+							if( response.result == false){
+								showMsg('نکته',response.msg,'W');
+							}							
+							$.ajax({
+								type: "POST",
+								url: "changeStatus",
+								data: JSON.stringify(obj),
+								contentType: "application/json; charset=utf-8",
+								dataType: "json",
+								success: function(result) {
+									$('#messageReplay').modal('hide');
+									/*showMsg('انجام عملیات','تغییر وضعیت با موفقیت انجام گرفت','S',2);*/
+									rowData.length = 0;
+									$('#jqGrid').trigger( 'reloadGrid' );
+								},
+								error: function(err){
+									$('#messageReplay').modal('hide');
+								}
+							});
+						break;
+						case _PublicVar_replayMessage2 :
+							obj = {
+								reciver    : rowSelect.sender,
+								subject    : rowSelect.subject,
+								replayCode : rowSelect.code,
+								desc       : answer,
+								owner		: rowSelect.owner,
+							}
+							if(Msh_notEmpty(rowSelect.replayCode)){
+								obj.replayCode = rowSelect.replayCode;
+							}
+							var response = validator_message('replay-message',obj);
+							if( response.result == false){
+								showMsg('نکته',response.msg,'W');
+							}						
+							$.ajax({
+								type: "POST",
+								url: "message_new",
+								data: JSON.stringify(obj),
+								contentType: "application/json; charset=utf-8",
+								dataType: "json",
+								success: function(result) {
+									$('#messageReplay').modal('hide');
+									showMsg('ذخیره سازی','پیام با موفقیت ارسال گردید','S',2);
+									$('#jqGrid').trigger( 'reloadGrid' );
+								},
+								error: function(err){
+									$('#messageReplay').modal('hide');
+								}
+							});
+						break;
+						case _PublicVar_replayMessage3 :
+							if(Msh_isEmpty(rowSelect.replayCode)){
+								window.location = "/message_new?code="+rowSelect.code;
+							}else{
+								window.location = "/message_new?code="+rowSelect.replayCode;
+							}
+						break;	
+						case _PublicVar_replayMessage4 :
+							obj = {
+								reciver    	: rowSelect.sender,
+								subject    	: rowSelect.subject,
+								replayCode 	: rowSelect.code,
+								desc       	: answer,
+								owner		: rowSelect.owner,
+								status		: _PublicVar_replayMessage4,
+							}
+							if(Msh_notEmpty(rowSelect.replayCode)){
+								obj.replayCode = rowSelect.replayCode;
+							}
+							var response = validator_message('close-message',obj);
+							if( response.result == false){
+								showMsg('نکته',response.msg,'W');
+							}						
+							$.ajax({
+								type: "POST",
+								url: "message_new",
+								data: JSON.stringify(obj),
+								contentType: "application/json; charset=utf-8",
+								dataType: "json",
+								success: function(result) {
+									$('#messageReplay').modal('hide');
+									showMsg('ذخیره سازی','پیام با موفقیت ارسال گردید','S',2);
+									$('#jqGrid').trigger( 'reloadGrid' );
+								},
+								error: function(err){
+									$('#messageReplay').modal('hide');
+								}
+							});
+						break;
+						default:
+						break;
+					}
+				},
+				onCancel: function() {
+					//$response.html('Canceled!');
+				}
+			});
+			//$('#message1').text(rowSelect.desc);
+		}
+					
+    </script>
+
+<body style="text-align : right; ">
+  <div class="container-scroller">
+    <!-- partial:partials/_navbar.html -->
+	<% if(data.rules == 2){ %> <% include ../users/mytoppannel.ejs %> <% } else if(data.rules == 1){ %> <% include ../admin/toppannel.ejs %> <% } %>
+    <!-- partial -->
+    <div class="container-fluid page-body-wrapper">
+      <!-- partial:partials/_sidebar.html -->
+		<% if(data.rules == 2){ %> <% include ../users/myrightpannel.ejs %> <% } else if(data.rules == 1){ %> <% include ../admin/rightpannel.ejs %> <% } %>
+      <!-- partial -->
+      <div class="main-panel">
+        <div class="content-wrapper">
+ 
+		  <!-- ----------------------------------------------------------------------------- -->
+          <div class="row">
+			<div class="col-12 grid-margin">
+				<table id="jqGrid"></table>
+				<div id="jqGridPager"></div>
+			</div>
+          </div>
+        </div>
+			<% if(data.rules == 2){ %> <% include ../users/myfooter.ejs %> <% } else if(data.rules == 1){ %> <% include ../admin/footer.ejs %> <% } %>
+      </div>
+    </div>
+  </div>
+
+</body>
+
+</html>

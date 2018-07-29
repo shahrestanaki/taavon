@@ -1,0 +1,200 @@
+  <% include ./message_header.ejs %>
+	
+<script type="text/javascript">
+	var profile = {
+		fullname : '<%=data.fullname %>',
+		rulesname : '<%=data.rulesname %>',
+	};
+ 	
+	$.jgrid.defaults.responsive = true;
+	$.jgrid.defaults.styleUI = 'BootstrapMy';
+ 
+	var templateSearch = ""
+	templateSearch += "<div> نام : </div><div>{name} </div>";
+	templateSearch += "<div> نام خانوادگی : </div><div>{famili} </div>";
+	templateSearch += "<div> نام کاربری :</div><div> {username} </div>";
+	templateSearch += "<div> وضعیت :</div><div> {status} </div>";
+	templateSearch += "<div> نقش کاربری :</div><div> {rules} </div>";
+ 
+	var rowData = new Array();
+	$(document).ready(function () {
+		getMyMessageCount();	
+		
+            $("#jqGrid").jqGrid({
+				caption: "پیام های ارسال شده",
+				direction : "rtl",
+				url: '/message_sended',
+				viewrecords: true,
+                mtype: "get",
+                datatype: "json",
+                colModel: [
+                    { label: 'کد پیام',  name: 'code',  searchrules : {},classes: 'd-none d-sm-table-cell'
+                    },
+                    { label : 'موضوع', name: 'subject', searchrules : {}
+                    },
+                    { label : 'گیرنده پیام', name: 'recivername', searchrules : {},classes: 'd-none d-sm-table-cell'
+                    },
+					{ label: 'زمان ارسال',  name: 'datecreateF', searchrules : {},classes: 'd-none d-sm-table-cell'
+                    },	
+                    { label: 'وضعیت پیام',name: 'statusname',index : 'status', align:"center",
+						formatter:designStateForOnline, search:true,
+						stype: "select",searchoptions : {value: "1:" + _PublicVar_messageUnreadDesc + ";2:"+_PublicVar_messageAnswerDesc + ";3:"+_PublicVar_messageCloseDesc}
+                    },
+					{ label: 'پیام ارسال شده', search:false,align:"center", formatter:designImgForShowMsg ,editable: false,
+                    },
+					{ label: 'نتیجه پیام', search:false,align:"center", formatter:designImgForShowEndMsg ,editable: false,
+                    },
+					{ label: 'بستن پیام', search:false,align:"center", formatter:designImgForCloseMsgSend ,editable: false,classes: 'd-none d-sm-table-cell'
+                    },						
+                ],
+				sortorder : 'desc',sortname: "datecreateF",  page: 1, viewrecords: true, autowidth : true,  height: 'auto',   rowNum: 10,
+                pager: "#jqGridPager",
+				beforeRequest : function () {
+					applyClassesToHeaders($("#jqGrid")[0]);
+					rowData.length = 0;
+				},
+				beforeRefresh: function () {
+				}
+            }).trigger("reloadGrid");
+ 
+            $('#jqGrid').navGrid('#jqGridPager',
+                { edit: false, add: false, del: true, search: true, refresh: true, view: false, position: "left",cloneToTop: true ,focusField : 1},
+                // options for the Edit Dialog
+                {
+                },
+                // options for the Add Dialog
+                {
+                },
+                // options for the Delete Dailog
+                {
+					mtype: "DELETE",
+					url: "/userslist",
+                    errorTextFormat: function (data) {
+                        return 'Error: ' + data.responseText
+					},
+                },
+                // options for the sort Dailog
+                {
+					template: templateSearch,//showQuery: true
+				}
+				);
+        });
+		
+		/* for hide in minimal size*/
+		function applyClassesToHeaders(table) {
+			var columnInfo, iCol, iRow,
+				htable = $(table.grid.hDiv).find("table.ui-jqgrid-htable")[0],
+				firstRow = table.rows[0];
+				colModel = $(table).jqGrid("getGridParam", "colModel");     
+			for (iCol = 0; iCol < colModel.length; iCol++) {
+				columnInfo = colModel[iCol];
+				if (columnInfo.classes) {
+					for (iRow = 0; iRow < htable.rows.length; iRow++) {
+						$(htable.rows[iRow].cells[iCol]).addClass(columnInfo.classes);
+					}
+					$(firstRow.cells[iCol]).addClass(columnInfo.classes);
+				}
+			}
+		}
+ 
+ 
+		function designStateForOnline(cellvalue, options, rowObject){
+			if(cellvalue == _PublicVar_messageUnreadDesc){
+				return "<label class='badge badge-warning'>"+cellvalue+"</label>";
+			}else if (cellvalue == _PublicVar_messageAnswerDesc || cellvalue == _PublicVar_messageReplayDesc){
+				return "<label class='badge badge-teal'>"+_PublicVar_messageAnswerDesc+"</label>";
+			}else if (cellvalue == _PublicVar_messageCloseDesc){
+				return "<label class='badge badge-dark'>"+cellvalue+"</label>";
+			}else if (cellvalue == _PublicVar_messageSeeDesc){
+				return "<label class='badge btn-secondary'>"+cellvalue+"</label>";
+			}
+		}
+				
+ 		function designImgForShowMsg(cellvalue, options, rowObject) {
+			rowData.push(rowObject);
+			return "<img src='/images/icon/message-replay.png' height='32' alt='message-replay' style='cursor:pointer' "
+				+ " data-toggle='tooltip' title='پیام ارسال شده' onclick='messageShow(\"1\",\""+rowObject.code+"\")'/>";
+        }
+				
+ 		function designImgForShowEndMsg(cellvalue, options, rowObject) {
+			//rowData.push(rowObject);
+			return "<img src='/images/icon/message-result.png' height='32' alt='message-replay' style='cursor:pointer' "
+				+ " data-toggle='tooltip' title='نتیجه پیام' onclick='messageShow(\"2\",\""+rowObject.code+"\")'/>";
+        }
+				
+ 		function designImgForCloseMsgSend(cellvalue, options, rowObject) {
+			//rowData.push(rowObject);
+			return "<img src='/images/icon/message-off.png' height='32' alt='message-replay' style='cursor:pointer' "
+				+ " data-toggle='tooltip' title='نتیجه پیام' onclick='CloseMsgSend(\""+rowObject.code+"\")'/>";
+        }		
+		
+		function messageShow(flag,code){
+			var rowSelect = rowData.find(function (obj) { return obj.code === code; });
+			if(flag == "1"){
+				showMsg('پیام ارسالی شما',rowSelect.desc,'P');	
+			}else{
+				$.getJSON("/message_laststatue/" + code , function(result){
+					showMsg('پیام ارسالی شما',result,'P'); 
+				});	
+			}
+		}
+
+		function CloseMsgSend(code){
+			var rowSelect = rowData.find(function (obj) { return obj.code === code; });
+			obj = {
+				code    	: rowSelect.code,
+				status  	: _PublicVar_messageClose,
+			}
+			if(Msh_notEmpty(rowSelect.replayCode)== true){
+				obj.code = rowSelect.replayCode;
+			}
+			var response = validator_message('changeStatus',obj);
+			if( response.result == false){
+				showMsg('نکته',response.msg,'W');
+			}							
+			$.ajax({
+				type: "POST",
+				url: "changeStatus",
+				data: JSON.stringify(obj),
+				contentType: "application/json; charset=utf-8",
+				dataType: "json",
+				success: function(result) {
+					rowData.length = 0;
+					$('#jqGrid').trigger( 'reloadGrid' );
+				},
+				error: function(err){
+					showMsg('خطا',err,'D');
+				}
+			});
+		}		
+		
+    </script>
+ 
+<body style="text-align : right; ">
+  <div class="container-scroller">
+    <!-- partial:partials/_navbar.html -->
+	<% if(data.rules == 2){ %> <% include ../users/mytoppannel.ejs %> <% } else if(data.rules == 1){ %> <% include ../admin/toppannel.ejs %> <% } %>
+    <!-- partial -->
+    <div class="container-fluid page-body-wrapper">
+      <!-- partial:partials/_sidebar.html -->
+		<% if(data.rules == 2){ %> <% include ../users/myrightpannel.ejs %> <% } else if(data.rules == 1){ %> <% include ../admin/rightpannel.ejs %> <% } %>
+      <!-- partial -->
+      <div class="main-panel">
+        <div class="content-wrapper">
+ 
+		  <!-- ----------------------------------------------------------------------------- -->
+          <div class="row">
+			<div class="col-12 grid-margin">
+				<table id="jqGrid"></table>
+				<div id="jqGridPager"></div>
+			</div>
+          </div>
+        </div>
+			<% if(data.rules == 2){ %> <% include ../users/myfooter.ejs %> <% } else if(data.rules == 1){ %> <% include ../admin/footer.ejs %> <% } %>
+      </div>
+    </div>
+  </div>
+
+</body>
+
+</html>

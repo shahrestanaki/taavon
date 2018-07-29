@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en" >
+
+<head>
+  <meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>ورود به سایت</title>
+  
+  <link rel="stylesheet" href="/css/login/style.css">
+  <link rel="stylesheet" href="/css/font.css">
+  <link rel="stylesheet" href="/css/bootstrap-4.0.0/bootstrap.min.css">
+  <link rel="stylesheet" href="/css/font.css">
+    <link rel="stylesheet" href="/css/my.css">
+  
+  <script type="text/javascript" src="/js/bootstrap-4.0.0/jquery.min.js"></script> 
+  <script type="text/javascript" src="/js/bootstrap-4.0.0/popper.min.js"></script> 
+  <script type="text/ecmascript" src="/js/bootstrap-4.0.0/bootstrap.js"></script> 
+   <!-- <script src='/js/jquery.min.js'></script> -->
+  <script type="text/javascript">
+	$(document).ready(function () {
+		/*testResize();
+		window.addEventListener("resize", function() {
+			testResize();
+		}, false);*/
+		$('#username , #password').keypress(function (e) {
+			var key = e.which;
+			if(key == 13){
+				submitForm();
+			}
+		});
+ 	});
+	function submitForm() { // submits form
+		if(checkInput() == true){
+			if (document.getElementById("formId")) {		
+				//event.preventDefault();
+				$('#h1Message').attr('hidden',false);
+				$('#alertMessage').text('');
+				$('form').fadeOut(500);
+				$('.wrapper').addClass('form-success');		
+				document.getElementById("formId").submit();
+			}
+		}
+    }
+	
+	function checkInput(){
+		var username =$('#username').val();
+        var password =$('#password').val();
+		var captcha =$('#captcha').val();
+		if(captcha != undefined){
+			if(captcha == ''){
+				$('#alertMessage').text('متن عکس را وارد نمایید');
+				return false;
+			}
+		}
+		if(username == '' || password == ''){
+			$('#alertMessage').text('نام کاربری و رمز عبور را درج نمایید');
+			return false;
+		}else{
+			return true;
+		}
+	}
+    function btnSubmitClick(){
+		submitForm();
+	}
+	
+	function recaptcha(){
+	        var d = new Date();
+        $("#imgCaptcha").attr("src", "/captcha?"+d.getTime());
+		//document.getElementById("captcha").src = window.location.host + "/captcha";
+	}
+ 
+	/*function testResize(){
+		var width = window.screen.width;
+		var height = window.screen.height;
+		if(width < height){
+			$('#myModal').modal('show');
+		}
+	}*/
+    </script>
+	<style>
+	.modal-header2{
+		display: flow-root; 
+	}
+	#captcha{
+		width:100px;
+		display: inline; 
+	}	
+	</style>
+</head>
+
+<body>
+    <!--
+<div id="myModal" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header modal-header2  alert alert-danger">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title text-left" >توجه!</h4>
+      </div>
+        <div class="modal-body">
+			<p class="text-right" style="direction: rtl;float:right"> برای استفاده صحیح از تمامی امکانات سامانه دستگاه خود را در حالت افقی (wide) قرار دهید </p>
+        </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default text-left" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+ -->
+  <div class="wrapper">
+	<div class="container">
+		<div><span id = "alertMessage" style="color: black;" class="text-danger"><%= message %></span></div>
+		<h1 id="h1Message" hidden="true">خوش آمدید</h1>
+		<!-- show any messages that come back with authentication -->
+		<form class="form" action="/login" method="post" id="formId" name="formId">
+			<input type="hidden" name="_csrf" value="<%= csrfToken %>">
+			<input type="text" name="username" id="username" placeholder="نام کاربری" autocomplete="off" maxlength="20">
+			<input type="password" name="password" id="password" placeholder="رمز عبور" autocomplete="off" maxlength="20">
+			<!-- <input type="checkbox" class="form-control" name="remember" value="yes"> -->
+			<% if (captcha == true) { %>
+				<div><img src = "/captcha" onclick="recaptcha()" id="imgCaptcha" alt="دوباره خوانی"></img><input type="text" name="captcha" id="captcha" placeholder="ورود متن" autocomplete="off" maxlength="10" ></div>
+			<% } %>
+			<button type="button" id="login-button" onclick="btnSubmitClick();" >Login</button>
+		</form>
+		<% if (message.length > 0) { %>
+			<script>
+				$('.wrapper').removeClass('form-success');
+				$('form').fadeIn(1);
+			</script>
+		<% } %>
+	</div>
+	
+	<ul class="bg-bubbles">
+		<li></li>
+		<li></li>
+		<li></li>
+		<li></li>
+		<li></li>
+		<li></li>
+		<li></li>
+		<li></li>
+		<li></li>
+		<li></li>
+	</ul>
+</div>
+</body>
+
+</html>
