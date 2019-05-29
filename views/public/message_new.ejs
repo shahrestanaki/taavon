@@ -1,10 +1,6 @@
    <% if(data.rules == 2){ %> <% include ../users/mydashboard_header.ejs %> <% } else if(data.rules == 1){ %> <% include ../admin/dashboard_header.ejs %> <% } %>
-   
+    
 <script>
-	var profile = {
-		fullname : '<%=data.fullname %>',
-		rulesname : '<%=data.rulesname %>',
-	};
 	var msgCode = new URL(window.location.href).searchParams.get("code");
 	var msgOwner = null;
 	$(document).ready(function () {

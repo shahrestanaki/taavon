@@ -19,13 +19,13 @@ global.timeMinuteForUnLock = 3 ;
 global.maxAgeSession = 20*60*1000 ; // 20 minutes
 //----- brute force and DoS attack
 global.bruteforce_windowMs= 5*60*1000; // 5 minutes
-global.bruteforce_max= 20; // limit each IP to 30 requests per windowMs
+global.bruteforce_max= 100; // limit each IP to 30 requests per windowMs
 global.bruteforce_delayMs= 1*1000; // slow down subsequent responses by 1 seconds per request
 //delayMs= 0; // disable delaying - full speed until the max limit is reached
 global.bruteforce_delayAfter= 15; // begin slowing down responses after the 10 request
 
 global.bruteforceAll_windowMs= 5*60*1000; // 5 minutes
-global.bruteforceAll_max= 50; // limit each IP to 100 requests per windowMs
+global.bruteforceAll_max= 100; // limit each IP to 100 requests per windowMs
 global.bruteforceAll_delayMs= 1*1000; // slow down subsequent responses by 1 seconds per request
 global.bruteforceAll_delayAfter= 40; // begin slowing down responses after the 50 request
 
@@ -63,3 +63,7 @@ global.transactionTypeDebit = 0;
 global.transactionTypeDebitDesc = 'برداشت';
 global.transactionTypeCredit = 1;
 global.transactionTypeCreditDesc = 'واریز';
+//----- dashboard
+global.avatarUrl = "images/faces/";
+global.avatarType = "png,jpg,gif";
+global.avatarSize = 300;

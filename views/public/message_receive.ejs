@@ -1,11 +1,7 @@
   <% include ./message_header.ejs %>
   
 <script type="text/javascript">
-	var profile = {
-		fullname : '<%=data.fullname %>',
-		rulesname : '<%=data.rulesname %>',
-	};
-   
+  
 	$.jgrid.defaults.responsive = true;
 	$.jgrid.defaults.styleUI = 'BootstrapMy';
 		
@@ -30,8 +26,6 @@
                 colModel: [
                     { label: 'کد پیام',  name: 'code',  searchrules : {},classes: 'd-none d-sm-table-cell'
                     },
-                    { label: 'پیام وابسته',  name: 'replayCode',  searchrules : {},classes: 'd-none d-sm-table-cell'
-                    },					
                     { label : 'موضوع', name: 'subject', searchrules : {}
                     },
                     { label : 'ارسال کننده', name: 'sendername', searchrules : {},classes: 'd-none d-sm-table-cell'
@@ -158,8 +152,13 @@
 						Msh_bookmarkInput('message2','danger',true,'لطفا پاسخ را درج فرمایید');
 						return ;
 					}
+
+					if(Msh_isEmpty(rowSelect.parent)){/*for first replay*/
+						rowSelect.parent = rowSelect.id;
+					}
+							
 					switch(selected){
-						case _PublicVar_replayMessage1 :
+						case _PublicVar_replayMessage1 :/*changeStatus*/
 							obj = {
 								code    	: rowSelect.code,
 								status  	: selected,
@@ -185,17 +184,17 @@
 								}
 							});
 						break;
-						case _PublicVar_replayMessage2 :
+						case _PublicVar_replayMessage2 :/*ارسال پاسخ*/
 							obj = {
 								reciver    : rowSelect.sender,
 								subject    : rowSelect.subject,
-								replayCode : rowSelect.code,
+								parent	 : rowSelect.parent,
 								desc       : answer,
 								owner		: rowSelect.owner,
 							}
-							if(Msh_notEmpty(rowSelect.replayCode)){
-								obj.replayCode = rowSelect.replayCode;
-							}
+							/*if(Msh_notEmpty(rowSelect.parent)){
+								obj.parent = rowSelect.parent;
+							}*/
 							var response = validator_message('replay-message',obj);
 							if( response.result == false){
 								showMsg('نکته',response.msg,'W');
@@ -217,24 +216,24 @@
 							});
 						break;
 						case _PublicVar_replayMessage3 :
-							if(Msh_isEmpty(rowSelect.replayCode)){
+							if(Msh_isEmpty(rowSelect.parent)){
 								window.location = "/message_new?code="+rowSelect.code;
 							}else{
-								window.location = "/message_new?code="+rowSelect.replayCode;
+								window.location = "/message_new?code="+rowSelect.parent;
 							}
 						break;	
-						case _PublicVar_replayMessage4 :
+						case _PublicVar_replayMessage4 :/*بستن پاسخ*/
 							obj = {
 								reciver    	: rowSelect.sender,
 								subject    	: rowSelect.subject,
-								replayCode 	: rowSelect.code,
+								parent 	: rowSelect.parent,
 								desc       	: answer,
 								owner		: rowSelect.owner,
 								status		: _PublicVar_replayMessage4,
 							}
-							if(Msh_notEmpty(rowSelect.replayCode)){
-								obj.replayCode = rowSelect.replayCode;
-							}
+							/*if(Msh_notEmpty(rowSelect.parent)){
+								obj.parent = rowSelect.parent;
+							}*/
 							var response = validator_message('close-message',obj);
 							if( response.result == false){
 								showMsg('نکته',response.msg,'W');
@@ -247,7 +246,7 @@
 								dataType: "json",
 								success: function(result) {
 									$('#messageReplay').modal('hide');
-									showMsg('ذخیره سازی','پیام با موفقیت ارسال گردید','S',2);
+									/*showMsg('ذخیره سازی','پیام با موفقیت ارسال گردید','S',2);*/
 									$('#jqGrid').trigger( 'reloadGrid' );
 								},
 								error: function(err){

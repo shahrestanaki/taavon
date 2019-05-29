@@ -14,6 +14,7 @@
 	var profile = {
 		fullname : '<%=data.fullname %>',
 		rulesname : '<%=data.rulesname %>',
+		avatar : '<%=data.avatar %>',
 	};
 	
 	$( document ).ready(function() {
@@ -70,6 +71,14 @@
 				template: templateSearch,
 			}
 			);
+
+			$("#upload-input").change(function(){
+			changeAvatar();
+			});
+			if(Msh_notEmpty(profile.avatar)){
+				$("#profileAvatar").attr("src",profile.avatar);
+			}
+		
 		});
  
 				/* for hide in minimal size*/

@@ -103,6 +103,7 @@ module.exports = function(app, passport) {
 	app.get('/dashboard', isLoggedIn,dashboard.form);
 	app.post('/changepass', isLoggedIn,dashboard.changepass);
 	app.get('/loginchart', isAdminLoggedIn,dashboard.loginchart);
+	app.post('/avatar', isLoggedIn,dashboard.avatar);
 	// users list -----
 	app.get('/usersform', isAdminLoggedIn, userslist.form);
 	app.get('/userslist', isAdminLoggedIn, userslist.list);
@@ -131,6 +132,7 @@ module.exports = function(app, passport) {
 	app.get('/message_new', isLoggedIn, message.newform);
 	app.post('/message_new',isLoggedIn, message.save);
 	app.get('/message_load/:code', isLoggedIn, message.message_load);
+	app.get('/message_history/:code', isLoggedIn, message.message_history);
 	app.get('/message_laststatue/:code', isLoggedIn, message.message_laststatue);
 	app.get('/listuseradmin', isLoggedIn, message.listuseradmin);
 	app.post('/changeStatus',isLoggedIn, message.changeStatus);

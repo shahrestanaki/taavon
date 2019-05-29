@@ -36,7 +36,7 @@ exports.save = function(req,res){
 	var user = parseInt(req.user.id ) +  parseInt(global.changIdForHack);
 	var data = {
 		code 		: "me"+ user + moment(new Date()).format("MDHHmmss"),
-		replayCode  : input.replayCode,
+		parent 		: parseInt(input.parent)-global.changIdForHack,
 		subject     : input.subject,
 		desc 		: input.desc,
 		sender 		: req.user.id, 
@@ -49,8 +49,8 @@ exports.save = function(req,res){
 	var response = null;
 	var newMsg = true;
 	var updateStatus = null;
-	if(myjs.isNull(data.replayCode) == true){/* new message */
-		data.replayCode = null;
+	if(myjs.isNull(input.parent) == true){/* new message */
+		data.parent = null;
 		data.status = global.messageUnread;
 		data.owner = req.user.id;
 		
@@ -72,7 +72,7 @@ exports.save = function(req,res){
 	
     pool.getConnection(function (err, connection) {
 		if(newMsg == false){
-			var query2 = connection.query("UPDATE taa_message SET status = ? WHERE code = ? or replayCode = ? ",[updateStatus,data.replayCode,data.replayCode], function(err2, rows2){
+			var query2 = connection.query("UPDATE taa_message SET status = ? WHERE id = ? or parent = ? ",[updateStatus,data.parent,data.parent], function(err2, rows2){
 				if (err2){
 					var test = coreJs._getErrMessage(err2,'update old message','بروز رسانی پیام گذشته',query2.sql);
 					res.status(test.status).send(test.msg);
@@ -144,7 +144,7 @@ exports.message_received = function(req, res){
 	var response = validator.global('list',null,res,data,null);
 	if(response.result != true) {res.send(response.msg);return ;}
 	var filter = 'reciver = ' + changIdForHack + ' and (status = ' + global.messageUnread + ' or status = ' + global.messageAnswer  + ' or status = ' + global.messageSee + ')'
-	var sql = createSql(req , "vu.code,vu.subject,vu.desc,vu.datecreateF,vu.status,vu.statusname,vu.sendername,vu.sender,vu.replayCode,vu.owner" , "vi_taa_message" , "vu" , filter);
+	var sql = createSql(req , "vu.id,vu.parent,vu.code,vu.subject,vu.desc,vu.datecreateF,vu.status,vu.statusname,vu.sendername,vu.sender,vu.owner" , "vi_taa_message" , "vu" , filter);
 	pool.getConnection(function(err,connection){
         var query = connection.query(sql ,function(err,rows){
 			connection.release();
@@ -194,7 +194,7 @@ exports.message_sended = function(req, res){
 	var response = validator.global('list',null,res,data,null);
 	if(response.result != true) {res.send(response.msg);return ;}
 	
-	var sql = createSql(req , "vu.code,vu.subject,vu.desc,vu.datecreateF,vu.status,vu.statusname,vu.recivername,vu.reciver" , "vi_taa_message" , "vu" , "owner = " + changIdForHack + ' and vu.replayCode is null ');
+	var sql = createSql(req , "vu.id,vu.code,vu.subject,vu.desc,vu.datecreateF,vu.status,vu.lastStatueName,vu.recivername,vu.reciver" , "vi_taa_message" , "vu" , "owner = " + changIdForHack + ' and vu.parent is null ');
 	pool.getConnection(function(err,connection){
         var query = connection.query(sql ,function(err,rows){
 			connection.release();
@@ -211,17 +211,18 @@ exports.message_sended = function(req, res){
 
  /* load message */
 exports.message_load = function(req, res){
-    var code = req.params.code;
+    var parent = req.params.code;
+	var id = parseInt(parent) - parseInt(global.changIdForHack);
 	var user = parseInt(req.user.id ) +  parseInt(global.changIdForHack);
 	//-------------- validator
 	var data = new Array();
-	data.push(code);
+	data.push(parent);
 	var response = validator.global('list',null,res,data,null);
 	if(response.result != true) {res.send(response.msg);return ;}
 
-	var sql = " select msg.subject , msg.desc , msg.datecreateF ,msg.sendername,msg.reciver,msg.owner from vi_taa_message msg where (msg.code = ? or msg.replayCode = ?) order by msg.datecreateE desc";
+	var sql = " select msg.subject , msg.desc , msg.datecreateF ,msg.sendername,msg.reciver,msg.owner from vi_taa_message msg where  (msg.id = ? or msg.parent = ?) order by msg.datecreateE desc";
 	pool.getConnection(function(err,connection){
-		var query = connection.query(sql,[code,code],function(err, rows){
+		var query = connection.query(sql,[id,parent],function(err, rows){
 			connection.release();
             if(err){
 				var test = coreJs._getErrMessage(err,'load message','بارگذاری پیام',query.sql);
@@ -230,11 +231,11 @@ exports.message_load = function(req, res){
 			}				
 			if (!rows.length) {
 				res.status(422).send('سابقه ای برای این پیام وجود ندارد .');
-				coreJs._createLog('log',req,req.user.id,global.Error_Hack,'access denides to :' + code);
+				coreJs._createLog('log',req,req.user.id,global.Error_Hack,'access denides to :' + parent);
 				return;				
 			}else{
 				if(rows[0].reciver != user){
-					coreJs._createLog('log',req,req.user.id,global.Error_Hack,'access denides to :' + code);
+					coreJs._createLog('log',req,req.user.id,global.Error_Hack,'access denides to :' + parent);
 					res.status(422).send('شما دسترسی مجاز برای مشاهده این پیام را ندارید . در صورت لزوم با ادمین سامانه تماس بگیرید');
 					return;
 				}
@@ -248,19 +249,64 @@ exports.message_load = function(req, res){
     });
 };
 
- /* last statue of message */
-exports.message_laststatue = function(req, res){
+
+ /* load message */
+exports.message_history = function(req, res){
     var code = req.params.code;
 	var user = parseInt(req.user.id ) +  parseInt(global.changIdForHack);
+	var changIdForHack =  parseInt(global.changIdForHack);
 	//-------------- validator
 	var data = new Array();
 	data.push(code);
 	var response = validator.global('list',null,res,data,null);
 	if(response.result != true) {res.send(response.msg);return ;}
-	
-	var sql = " select msg.desc , msg.datecreateF ,msg.sendername from vi_taa_message msg where msg.owner = ? and msg.replayCode = ? and msg.status = ? order by msg.datecreateE desc limit 1 ";
+
+	var sql = " select msg.subject , msg.desc , msg.datecreateF ,msg.sendername,msg.recivername,msg.owner from vi_taa_message msg where (msg.parent = " 
+				+ " (select ms.id from vi_taa_message ms where ms.code = ?)) or (msg.id = (select ms.id from vi_taa_message ms where ms.code = ?) ) "
+				+ " order by msg.datecreateE asc";
 	pool.getConnection(function(err,connection){
-		var query = connection.query(sql,[user,code,global.messageClose],function(err, rows){
+		var query = connection.query(sql,[code,code],function(err, rows){
+			connection.release();
+            if(err){
+				var test = coreJs._getErrMessage(err,'load message','بارگذاری پیام',query.sql);
+				res.status(test.status).send(test.msg);
+				return ;
+			}				
+			if (!rows.length) {
+				res.status(422).send('سابقه ای برای این پیام وجود ندارد .');
+				coreJs._createLog('log',req,req.user.id,global.Error_Hack,'access denides to :' + code);
+				return;				
+			}else{
+				if(rows[0].owner != user){
+					coreJs._createLog('log',req,req.user.id,global.Error_Hack,'access denides to :' + code);
+					res.status(422).send('شما دسترسی مجاز برای مشاهده این پیام را ندارید . در صورت لزوم با ادمین سامانه تماس بگیرید');
+					return;
+				}
+				/*var obj = {replayCode:null , subject:rows[0].subject , desc:'',status : global.messageAnswer,owner : rows[0].owner};
+				for(var i = rows.length -1 ;i>=0  ;i--){
+					obj.desc = obj.desc + '<b>' + rows[i].sendername + '</b> (' + rows[i].datecreateF + ') : ' + rows[i].desc + '\n <hr>';
+				}
+				res.json(obj);*/
+			var jsonObj = createReslt(req,rows);
+			res.json(jsonObj);				
+			}
+		});	
+    });
+};
+
+ /* last statue of message */ //// DEPRICATED //////
+exports.message_laststatue = function(req, res){
+    var parent = req.params.parent;
+	var user = parseInt(req.user.id ) +  parseInt(global.changIdForHack);
+	//-------------- validator
+	var data = new Array();
+	data.push(parent);
+	var response = validator.global('list',null,res,data,null);
+	if(response.result != true) {res.send(response.msg);return ;}
+	
+	var sql = " select msg.desc , msg.datecreateF ,msg.sendername from vi_taa_message msg where msg.owner = ? and msg.parent = ? and msg.status = ? order by msg.datecreateE desc limit 1 ";
+	pool.getConnection(function(err,connection){
+		var query = connection.query(sql,[user,parent,global.messageClose],function(err, rows){
 			connection.release();
 			console.log(query.sql);
             if(err){

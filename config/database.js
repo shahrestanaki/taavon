@@ -5,11 +5,11 @@ var connection = require('express-myconnection');
 var options = {
 	connectionLimit : 10,
 	timeout: 30000, // 30s
-	host : 'localhost', 
+	host : 'localhost', //'localhost',
 	user : 'root',
-	password : '',
+	password : '7838406',
 	port : 3306, //port mysql
-	database : ''
+	database : 'taavondb'
 };
 module.exports.options = options ;
 

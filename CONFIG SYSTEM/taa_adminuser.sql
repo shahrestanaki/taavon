@@ -1,0 +1,1 @@
+select (`us`.`id` + 99) AS `code`,concat(`us`.`name`,' ',`us`.`famili`) AS `fullname` from `taa_users` `us` where (`us`.`rules` = 1)

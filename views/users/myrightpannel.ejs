@@ -2,7 +2,11 @@
         <ul class="nav">
           <li class="nav-item nav-profile">
             <div class="nav-link">
-              <div class="profile-image"> <img src="images/faces/admin.png" alt="image"/> <span class="online-status online"></span> </div>
+              <div class="profile-image"><input id="upload-input" type="file" name="upload" style="display: none;">
+						<img style="cursor:pointer" id="profileAvatar" alt="image" onclick="clickAvatar()"
+						src="images/faces/defult.png"
+						/>
+						<span class="online-status online"></span> </div>
               <div class="profile-name">
                 <p class="name"><script type="text/javascript">document.write(profile.fullname)</script></p>
                 <p class="designation"><script type="text/javascript">document.write(profile.rulesname)</script></p>

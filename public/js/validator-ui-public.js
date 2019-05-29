@@ -14,7 +14,7 @@
 				array.push({data:data.reciver,fname:'دریافت کننده',required:true,format:'int'});
 				array.push({data:data.subject,fname:'موضوع',required:true,format:'text',minSize:1,maxSize:255});
 				array.push({data:data.desc,fname:'شرح',required:true,format:'text',minSize:1,maxSize:500});
-				array.push({data:data.replayCode,fname:'پیام وابسته',required:true,format:'text'});
+				array.push({data:data.parent,fname:'پیام وابسته',required:true,format:'text'});
 				response = Msh_CheckValidateData(array);
 			break;		
 			case 'close-message' :
@@ -22,14 +22,14 @@
 				array.push({data:data.reciver,fname:'دریافت کننده',required:true,format:'int'});
 				array.push({data:data.subject,fname:'موضوع',required:true,format:'text',minSize:1,maxSize:255});
 				array.push({data:data.desc,fname:'شرح',required:true,format:'text',minSize:1,maxSize:500});
-				array.push({data:data.replayCode,fname:'پیام وابسته',required:true,format:'text'});
+				array.push({data:data.parent,fname:'پیام وابسته',required:true,format:'text'});
 				array.push({data:data.status,fname:'وضعیت',required:true,format:'int',min:_PublicVar_messageClose,max:_PublicVar_messageClose});
 				response = Msh_CheckValidateData(array);
 			break;	
 			case 'changeStatus' :
 				var array = new Array();
 				array.push({data:data.code,fname:'کد پیام',required:true,format:'text',minSize:4,maxSize:40});
-				array.push({data:data.status,fname:'وضعیت',required:true,format:'int',min:_PublicVar_messageClose,max:_PublicVar_messageClose});
+				array.push({data:data.status,fname:'وضعیت',required:true,format:'int',fix:'2,3,5,10'});
 				response = Msh_CheckValidateData(array);
 			break;				
 			default:

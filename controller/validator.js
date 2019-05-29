@@ -175,7 +175,7 @@ module.exports = {
 				array.push({data:data.reciver,fname:'دریافت کننده',required:true,format:'int'});
 				array.push({data:data.subject,fname:'موضوع',required:true,format:'text',minSize:1,maxSize:255});
 				array.push({data:data.desc,fname:'شرح',required:true,format:'text',minSize:1,maxSize:500});		
-				array.push({data:data.replayCode,fname:'پیام وابسته',required:true,format:'text'});
+				array.push({data:data.parent,fname:'پیام وابسته',required:true,format:'text'});
 				
 				var test = myjs.checkValidateData(array);
 				if( test.result == false){
@@ -190,7 +190,7 @@ module.exports = {
 				array.push({data:data.reciver,fname:'دریافت کننده',required:true,format:'int'});
 				array.push({data:data.subject,fname:'موضوع',required:true,format:'text',minSize:1,maxSize:255});
 				array.push({data:data.desc,fname:'شرح',required:true,format:'text',minSize:1,maxSize:500});		
-				array.push({data:data.replayCode,fname:'پیام وابسته',required:true,format:'text'});
+				array.push({data:data.parent,fname:'پیام وابسته',required:true,format:'text'});
 				array.push({data:data.status,fname:'وضعیت',required:true,format:'int',min:global.messageClose,max:global.messageClose});
 				
 				var test = myjs.checkValidateData(array);
@@ -204,7 +204,7 @@ module.exports = {
 			case 'changeStatus':
 				var array = new Array();
 				array.push({data:data.code,fname:'کد پیام',required:true,format:'text',minSize:4,maxSize:40});
-				array.push({data:data.status,fname:'وضعیت',required:true,format:'int',min:global.messageClose,max:global.messageClose});
+				array.push({data:data.status,fname:'وضعیت',required:true,format:'int',fix:'2,3,5,10'});
 				
 				var test = myjs.checkValidateData(array);
 				if( test.result == false){

@@ -1,13 +1,9 @@
   <%- include ./mydashboard_header.ejs %>
   <script>
-	var profile = {
-		fullname : '<%=data.fullname %>',
-		rulesname : '<%=data.rulesname %>',
-	};
-	
 	$( document ).ready(function() {
 		getMyMessageCount();
-	});
+		createTransChart();
+ 	});
 	function changePassword(id){
 		var url = $(this).attr('href');
 		$.confirm({
@@ -70,6 +66,27 @@
 			}
 		});
 	}
+
+	function createTransChart(){
+		$.getJSON("/mytrans?rows=5&page=1&sidx=person&sord=asc", function(result){
+			_data_Linechart.labels = [];
+			_data_Linechart.datasets[0].data = [];
+			var i = 0;
+			$.each(result, function(){
+				_data_Linechart.labels.push(result.rows[i].transdate);
+				_data_Linechart.datasets[0].data.push(result.rows[i].currency);
+				i++;
+			});
+			if ($("#transChart").length) {
+				var lineChartCanvas = $("#transChart").get(0).getContext("2d");
+				var lineChart = new Chart(lineChartCanvas, {
+				  type: 'line',
+				  data: _data_Linechart,
+				  options: _options_Linechart
+				});
+			}			
+		});
+	}	
   </script>
 
 <body style="text-align : right; " >
@@ -118,6 +135,14 @@
                 </div>
               </div>
             </div>
+            <div class="col-xl-4 col-lg-4 col-md-4 col-sm-6 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title">نمودار ورود کاربران</h4>
+                  <canvas id="transChart" style="height:250px"></canvas>
+                </div>
+              </div>
+            </div>				
             <div class="col-lg-12 grid-margin stretch-card">
               <div class="card">
                 <div class="card-body">

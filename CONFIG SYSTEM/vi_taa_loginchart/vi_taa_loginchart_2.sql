@@ -1,0 +1,1 @@
+select `a`.`count` AS `count`,`a`.`date` AS `date` from `vi_taa_loginchart_1` `a` order by `a`.`date` desc limit 10

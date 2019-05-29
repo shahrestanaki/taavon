@@ -10061,7 +10061,8 @@ $.jgrid.extend({
 							var key;
 							$("#sData", frmtb+"_2").removeClass( commonstyle.active );
 							postdata[idname] = $t.p.idPrefix + postdata[idname];
-							if(data.status === undefined || data.status == 0 || data.status == 200 || data.status == 403 || data.status == 404 || data.status == 422 || data.status == 500){/******MSH****/
+							var _statusError = [0,200,403,404,422,500];/******MSH****/
+						if(data.status === undefined || _statusError.indexOf(data.status) != -1){/******MSH****/
 								switch(data.status) {
 									case 200:
 										if(ajaxOptions.type =="DELETE"){
@@ -10086,6 +10087,9 @@ $.jgrid.extend({
 										}else{
 											showMsg('خطا','هنگام انجام عملیات خطایی روی داده است . لطفا به مدیر سامانه اطلاع دهید','D');
 										}
+										break;
+									case 415:
+										showMsg('توجه',data.responseText,'W');
 										break;
 									default:
 										showMsg('بروز خطا','خطایی رخ داده است . لطفا با مدیر سامانه تماس بگیرید','D');
@@ -11144,7 +11148,9 @@ $.jgrid.extend({
 							complete:function(data,status){
 								var i;
 								$("#dData", "#"+dtbl+"_2").removeClass( commonstyle.active );
-								if(data.status === undefined || data.status == 0 || data.status == 200 || data.status == 403 || data.status == 404 || data.status == 422 || data.status == 500){/******MSH****/
+								var _statusError = [0,200,403,404,422,500];/******MSH****/
+								if(data.status === undefined || _statusError.indexOf(data.status) != -1){/******MSH****/								
+								//if(data.status === undefined || data.status == 0 || data.status == 200 || data.status == 403 || data.status == 404 || data.status == 422 || data.status == 500){/******MSH****/
 								
 									if ($.isFunction(rp_ge[$t.p.id]._afterSubmit)) {/******MSH****/
 										 rp_ge[$t.p.id]._afterSubmit.call($t, data, postd);
@@ -11174,6 +11180,9 @@ $.jgrid.extend({
 												showMsg('خطا','هنگام انجام عملیات خطایی روی داده است . لطفا به مدیر سامانه اطلاع دهید','D');
 											}
 											break;
+										case 415:
+											showMsg('توجه',data.responseText,'W');
+											break;											
 										default:
 											showMsg('بروز خطا','خطایی رخ داده است . لطفا با مدیر سامانه تماس بگیرید','D');
 											break;

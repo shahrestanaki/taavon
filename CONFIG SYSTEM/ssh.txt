@@ -1,0 +1,56 @@
+ip:78.47.171.137
+username:root
+password:Berbidvps.ir-670
+port:22
+--------------
+sudo lsof -i :8080
+sudo kill -9 PID
+-----------------------
+firewall-cmd --permanent --add-port=3000/tcp
+sudo firewall-cmd --zone=public --add-port=80/tcp --permanent
+firewall-cmd --reload
+netstat -tulpn | less
+-----------------------
+CentOS 7 64 : install node js
+curl --silent --location https://rpm.nodesource.com/setup_9.x | sudo bash -
+sudo yum -y install nodejs
+sudo yum install gcc-c++ make
+-----------------------
+Install MySQL :
+wget http://repo.mysql.com/mysql-community-release-el7-5.noarch.rpm
+sudo rpm -ivh mysql-community-release-el7-5.noarch.rpm
+yum update
+---
+sudo yum install mysql-server
+sudo systemctl start mysqld
+sudo systemctl status mysqld
+---
+sudo systemctl stop mysqld
+ssh -L 127.0.0.1:3306:127.0.0.1:3306 user@example.com -N
+ssh -L 127.0.0.1:3307:127.0.0.1:3306 user@example.com -N
+sudo systemctl start mysqld
+---sudo grep 'temporary password' /var/log/mysqld.log
+UPDATE mysql.user SET Password=PASSWORD('7838MYSQLmohammad') WHERE User='root';
+FLUSH PRIVILEGES;
+quit;
+sudo service mysqld restart  
+---
+sudo mysql_secure_installation
+mysqladmin -u root -p version
+---
+mysql -u root -p
+select user, host, password from mysql.user;
+create database taavondb;
+create user 'msh'@'localhost' identified by '7838MSHmohammad';
+grant all on taavondb.* to 'msh'@'%' identified by '7838406';
+GRANT ALL PRIVILEGES ON *.* TO 'msh'@'%' IDENTIFIED BY '7838406' WITH GRANT OPTION;
+GRANT ALL ON taavondb.* TO msh@78.47.171.137 IDENTIFIED BY '7838406';
+GRANT ALL PRIVILEGES ON *.* TO 'msh'@'%' IDENTIFIED BY '7838406' WITH GRANT OPTION;
+SELECT * from information_schema.user_privileges where grantee like "'msh'%";
+netstat -antp | grep 3306
+-----------------------
+delete folder : rm -rf foldername/
+unzip folder : unzip zipname
+/*parent.location.reload(true)*/
+ps aux | grep node
+netstat -antp | grep 3000

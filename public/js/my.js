@@ -276,7 +276,14 @@
 						if(parseInt(data) > parseInt(validValue)){
 							response.msg = "حداکثر مقدار قابل قبول برای فیلد " + "(" + dataName + ")" + " عدد " + validValue + " می باشد";
 							return response;
-						}						
+						}
+					break;
+					case 'fix' :
+						var find = validValue.split(',');
+						if(find.indexOf(data.toString()) == -1){
+							response.msg = "مقدار وارد شده خارج از بازه مقادیر قابل قبول می باشد";
+							return response;
+						}
 					break;
 					default:
 					break;
@@ -395,6 +402,47 @@
 		}
 		return num;
 	}
+	
+	function validateAvatar(suffix,size){
+		if(Msh_isEmpty(suffix)){
+			return "پسوند فایل ارسال شده دریافت نشد";
+		}else if(global.avatarType.indexOf(suffix) == -1){
+			return "پسوند فایل قابل قبول نمی باشد، پسوندهای قابل قبول: " + global.avatarType;
+		}else if(parseInt(size) > parseInt(global.avatarSize)){
+			return "حجم فایل بیش از مقدار مجاز " + global.avatarSize + " کیلو بایت می باشد"+ " حجم فایل ارسال شده " + parseInt(size) + " کیلوبایت است";
+		}else{
+			return true; 
+		}
+	}
+	
+	function clickAvatar(){
+		$("input[id='upload-input']").click();
+	}
+	
+	function changeAvatar(){
+		$("#profileAvatar").css("cursor","wait");
+		var data = new FormData();
+		$.each($('#upload-input')[0].files, function(i, file) {
+			data.append(file.name, file);
+		});
+		
+		$.ajax({
+			url: "avatar",
+			data: data,
+			cache: false,
+			contentType: false,
+			processData: false,
+			method: 'POST',
+			success: function(result) {
+				$("#profileAvatar").attr("src",result+"?rand="+ Math.random());
+				$("#profileAvatar").css("cursor","pointer");
+			},
+			error: function(result, xhr, jqXHR){
+				$("#profileAvatar").css("cursor","pointer");
+				showMsg('تغییر آواتار',result,'W');
+			}
+		});
+	}	
 	/*----------------------------------------------------*/
 	if (typeof module !== 'undefined' && typeof module.exports !== 'undefined'){
 		module.exports = {
@@ -418,6 +466,9 @@
 			 },	
 			 checkValidateData : function(array){
 				 return Msh_CheckValidateData(array);
+			 },	
+			 validateAvatar : function(name,size){
+				 return validateAvatar(name,size);
 			 },				 
 		}
 	}

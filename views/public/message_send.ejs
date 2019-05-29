@@ -1,11 +1,6 @@
   <% include ./message_header.ejs %>
 	
 <script type="text/javascript">
-	var profile = {
-		fullname : '<%=data.fullname %>',
-		rulesname : '<%=data.rulesname %>',
-	};
- 	
 	$.jgrid.defaults.responsive = true;
 	$.jgrid.defaults.styleUI = 'BootstrapMy';
  
@@ -36,13 +31,13 @@
                     },
 					{ label: 'زمان ارسال',  name: 'datecreateF', searchrules : {},classes: 'd-none d-sm-table-cell'
                     },	
-                    { label: 'وضعیت پیام',name: 'statusname',index : 'status', align:"center",
+                    { label: 'وضعیت پیام',name: 'lastStatueName',index : 'status', align:"center",
 						formatter:designStateForOnline, search:true,
 						stype: "select",searchoptions : {value: "1:" + _PublicVar_messageUnreadDesc + ";2:"+_PublicVar_messageAnswerDesc + ";3:"+_PublicVar_messageCloseDesc}
                     },
 					{ label: 'پیام ارسال شده', search:false,align:"center", formatter:designImgForShowMsg ,editable: false,
                     },
-					{ label: 'نتیجه پیام', search:false,align:"center", formatter:designImgForShowEndMsg ,editable: false,
+					{ label: 'سابقه پیام', search:false,align:"center", formatter:designImgForShowMsgTree ,editable: false,
                     },
 					{ label: 'بستن پیام', search:false,align:"center", formatter:designImgForCloseMsgSend ,editable: false,classes: 'd-none d-sm-table-cell'
                     },						
@@ -113,31 +108,67 @@
  		function designImgForShowMsg(cellvalue, options, rowObject) {
 			rowData.push(rowObject);
 			return "<img src='/images/icon/message-replay.png' height='32' alt='message-replay' style='cursor:pointer' "
-				+ " data-toggle='tooltip' title='پیام ارسال شده' onclick='messageShow(\"1\",\""+rowObject.code+"\")'/>";
+				+ " data-toggle='tooltip' title='پیام ارسال شده' onclick='historyOfMessage(\"1\",\""+rowObject.code+"\")'/>";
         }
 				
- 		function designImgForShowEndMsg(cellvalue, options, rowObject) {
+ 		function designImgForShowMsgTree(cellvalue, options, rowObject) {
 			//rowData.push(rowObject);
-			return "<img src='/images/icon/message-result.png' height='32' alt='message-replay' style='cursor:pointer' "
-				+ " data-toggle='tooltip' title='نتیجه پیام' onclick='messageShow(\"2\",\""+rowObject.code+"\")'/>";
+			return "<img src='/images/icon/message-result.png' height='32' alt='message-result' style='cursor:pointer' "
+				+ " data-toggle='tooltip' title='نتیجه پیام' onclick='historyOfMessage(\"2\",\""+rowObject.code+"\")'/>";
         }
 				
  		function designImgForCloseMsgSend(cellvalue, options, rowObject) {
 			//rowData.push(rowObject);
-			return "<img src='/images/icon/message-off.png' height='32' alt='message-replay' style='cursor:pointer' "
+			return "<img src='/images/icon/message-off.png' height='32' alt='message-off' style='cursor:pointer' "
 				+ " data-toggle='tooltip' title='نتیجه پیام' onclick='CloseMsgSend(\""+rowObject.code+"\")'/>";
         }		
 		
-		function messageShow(flag,code){
+		function historyOfMessage(flag,code){
 			var rowSelect = rowData.find(function (obj) { return obj.code === code; });
 			if(flag == "1"){
 				showMsg('پیام ارسالی شما',rowSelect.desc,'P');	
 			}else{
-				$.getJSON("/message_laststatue/" + code , function(result){
-					showMsg('پیام ارسالی شما',result,'P'); 
+				$.getJSON("/message_history/" + code , function(result){
+					//showMsg('پیام ارسالی شما',result,'P'); 
+					showModelHistory(result.rows);
 				});	
 			}
 		}
+		
+		function showModelHistory(data){
+			var eTable="<table class='table table-striped table-bordered table-sm'><thead class='bg-primary'><tr></tr><tr>"
+				+"<th  d-none d-sm-table-cell>تاریخ</th><th>فرستنده</th><th>شرح پیام</th><th>گیرنده</th></tr></thead><tbody>"
+			for(var i=0; i<data.length;i++) {
+				eTable += "<tr";
+				if(data[i]['status'] == 3){
+					eTable += " class='table-danger' ";
+				}
+				eTable +=">";
+				eTable += "<td>"+data[i]['datecreateF']+"</td>";
+				eTable += "<td>"+data[i]['sendername']+"</td>";
+				eTable += "<td>"+data[i]['desc']+"</td>";
+				eTable += "<td>"+data[i]['recivername']+"</td>";
+				eTable += "</tr>";
+			}
+			eTable +="</tbody></table>";
+			
+			var url = $(this).attr('href');
+			$.confirm({
+				id : 'logLoginDialog',
+				title : 'سابقه پیام',
+				template: 'info',
+				templateOk: 'primary',
+				message: '',
+				labelOk: 'بستن',
+				elements : eTable ,
+				onOk: function() {
+					$('#logLoginDialog').modal('hide');
+				},
+				buttonCancel : null
+
+			});
+		}
+		
 
 		function CloseMsgSend(code){
 			var rowSelect = rowData.find(function (obj) { return obj.code === code; });

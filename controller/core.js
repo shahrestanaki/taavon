@@ -209,6 +209,7 @@ function getErrMessage(err,en,fa,more){
 		result.msg = 'دیتای تکراری وارد شده است.لطفا در ورود اطلاعات دقت فرمایید';
 		return result;
 	}else{
-		return global.ErrorDataBase + " : " +  fa != null ? fa : '';
+		result.msg = global.ErrorDataBase + " : " +  fa != null ? fa : '';
+		return result;
 	}
 }

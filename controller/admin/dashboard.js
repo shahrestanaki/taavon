@@ -4,6 +4,9 @@ var pool = require('../../config/database');
 var coreJs  = require('../core');
 var createReslt  = coreJs._createReslt;
 var validator = require('../validator');
+var formidable = require('formidable');
+var fs = require('fs');
+var myjs = require('../../public/js/my');
 
 exports.form = function(req, res){
 	var user = req.user;
@@ -77,4 +80,39 @@ exports.loginchart = function(req, res){
     });
 };
 
+/* upload file for avatar */
+exports.avatar = function(req, res){
+	var userId = req.user.id;
+    var form = new formidable.IncomingForm();
+    form.parse(req);
+ 
+    form.on('fileBegin', function (name, file){/* save file */
+		//var name = name.split('.')[0];
+		var suffix = name.split('.')[1];
+		newName = userId + global.changIdForHack + "." + suffix;
+		var test = myjs.validateAvatar(suffix,form.bytesExpected/1000);
+		if(test == true){
+			file.path = "public/"+global.avatarUrl + newName ;
+			form.on('file', function (name, file){/* load file */
+				pool.getConnection(function (err, connection) {
+					var sql = " UPDATE `taa_users` SET `avatar` = '"+global.avatarUrl + newName+"' WHERE `id` = " + userId;
+					var query = connection.query(sql, function(err, rows) {
+						connection.release();
+						if (err){
+							var test = coreJs._getErrMessage(err,'exports.avatar','آپلود عکس کاربر با خطای دیتابیس مواجه شد',query.sql);
+							res.status(test.status).send(test.msg);
+							return ; 
+						}
+						res.status(200).send(global.avatarUrl + newName); 
+					});
+				});			
+			});		
+		}else{
+			var msg = test;
+			res.status(422).send(msg);			
+ 		}
+    });
+};
+
+ 
 

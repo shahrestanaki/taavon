@@ -3,6 +3,7 @@
 <script type="text/javascript" src="/js/datepicker/moment-jalaali.js"></script> 
  <%- include ../../public/js/validator-ui-admin.js %>
  <%- include ../../public/js/validator-ui-public.js %>
+
 <script>
 	function getMyMessageCount(){
 		$.getJSON("/mymessagecount", function(result){
@@ -101,6 +102,22 @@
 			}			
 		}
 	});
+	
+	var profile = {
+		fullname : '<%=data.fullname %>',
+		rulesname : '<%=data.rulesname %>',
+		avatar : '<%=data.avatar %>',
+	};
+	$(document).ready(function () {
+			$("#upload-input").change(function(){
+			changeAvatar();
+		});
+		if(Msh_notEmpty(profile.avatar)){
+			$("#profileAvatar").attr("src",profile.avatar);
+		}else{
+			$("#profileAvatar").attr("src","images/faces/admin.png");
+		}
+	});	
 	</script>
 	
 <div id="myModal_dialog" class="modal fade" role="dialog">
