@@ -1016,7 +1016,7 @@
         "imurmurhash": "0.1.4",
         "inquirer": "3.3.0",
         "is-resolvable": "1.1.0",
-        "js-yaml": "3.11.0",
+        "js-yaml": "3.13.1",
         "json-stable-stringify-without-jsonify": "1.0.1",
         "levn": "0.3.0",
         "lodash": "4.17.11",
@@ -2500,15 +2500,7 @@
       "resolved": "https://registry.npmjs.org/js-tokens/-/js-tokens-3.0.2.tgz",
       "version": "3.0.2"
     },
-    "js-yaml": {
-      "integrity": "sha512-saJstZWv7oNeOyBh3+Dx1qWzhW0+e6/8eDzo7p5rDFqxntSztloLtuKu+Ejhtq82jsilwOIZYsCz+lIjthg1Hw==",
-      "requires": {
-        "argparse": "1.0.10",
-        "esprima": "4.0.0"
-      },
-      "resolved": "https://registry.npmjs.org/js-yaml/-/js-yaml-3.11.0.tgz",
-      "version": "3.11.0"
-    },
+    "js-yaml": "^3.13.1",
     "jsbn": {
       "integrity": "sha1-peZUwuWi3rXyAdls77yoDA7y9RM=",
       "resolved": "https://registry.npmjs.org/jsbn/-/jsbn-0.1.1.tgz",
