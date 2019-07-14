@@ -1,6 +1,6 @@
-ip:78.47.171.137
+ip:
 username:root
-password:Berbidvps.ir-670
+password:
 port:22
 --------------
 sudo lsof -i :8080
@@ -41,11 +41,11 @@ mysqladmin -u root -p version
 mysql -u root -p
 select user, host, password from mysql.user;
 create database taavondb;
-create user 'msh'@'localhost' identified by '7838MSHmohammad';
-grant all on taavondb.* to 'msh'@'%' identified by '7838406';
-GRANT ALL PRIVILEGES ON *.* TO 'msh'@'%' IDENTIFIED BY '7838406' WITH GRANT OPTION;
-GRANT ALL ON taavondb.* TO msh@78.47.171.137 IDENTIFIED BY '7838406';
-GRANT ALL PRIVILEGES ON *.* TO 'msh'@'%' IDENTIFIED BY '7838406' WITH GRANT OPTION;
+create user 'msh'@'localhost' identified by 'mohammad';
+grant all on taavondb.* to 'msh'@'%' identified by 'mohammad';
+GRANT ALL PRIVILEGES ON *.* TO 'msh'@'%' IDENTIFIED BY 'mohammad' WITH GRANT OPTION;
+GRANT ALL ON taavondb.* TO msh@78.47.171.137 IDENTIFIED BY 'mohammad';
+GRANT ALL PRIVILEGES ON *.* TO 'msh'@'%' IDENTIFIED BY 'mohammad' WITH GRANT OPTION;
 SELECT * from information_schema.user_privileges where grantee like "'msh'%";
 netstat -antp | grep 3306
 -----------------------
